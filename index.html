@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Hearing Quiz - Endless Mode</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        h1 { color: #667eea; margin-bottom: 10px; font-size: 2em; }
+        .subtitle { color: #666; font-size: 0.9em; margin-bottom: 20px; }
+        .score-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .score-item { background: #f8f9fa; padding: 15px; border-radius: 10px; text-align: center; }
+        .score-label { font-size: 0.8em; color: #666; margin-bottom: 5px; }
+        .score-value { font-size: 1.5em; font-weight: bold; color: #667eea; }
+        .game-area { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .settings-area { background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .checkbox-container { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .checkbox-container input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+        .checkbox-container label { font-weight: bold; cursor: pointer; }
+        .difficulty-select { display: none; gap: 15px; margin-bottom: 30px; }
+        .difficulty-btn {
+            flex: 1;
+            padding: 20px;
+            border: 3px solid #667eea;
+            background: white;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #667eea;
+        }
+        .difficulty-btn:hover { background: #667eea; color: white; transform: translateY(-2px); }
+        .difficulty-btn.active { background: #667eea; color: white; }
+        .question-area { display: none; text-align: center; }
+        .question-number { font-size: 1.3em; margin-bottom: 20px; color: #667eea; font-weight: bold; }
+        .question-text {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            color: #333;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .controls { display: flex; gap: 10px; justify-content: center; margin-bottom: 30px; flex-wrap: wrap; }
+        .btn { padding: 12px 24px; border: none; border-radius: 8px; font-size: 1em; cursor: pointer; transition: all 0.3s; font-weight: bold; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5568d3; transform: translateY(-2px); }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-secondary:hover { background: #5a6268; }
+        .speed-control { margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px; }
+        .speed-control label { display: block; margin-bottom: 10px; font-weight: bold; color: #333; }
+        .speed-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            outline: none;
+            -webkit-appearance: none;
+            background: #ddd;
+        }
+        .speed-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+        .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .choice-btn {
+            padding: 30px 20px;
+            border: 3px solid #ddd;
+            background: white;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #333;
+        }
+        .choice-btn:hover { border-color: #667eea; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3); }
+        .choice-btn.correct { background: #28a745; color: white; border-color: #28a745; animation: pulse 0.5s; }
+        .choice-btn.incorrect { background: #dc3545; color: white; border-color: #dc3545; animation: shake 0.5s; }
+        .choice-btn:disabled { cursor: not-allowed; opacity: 0.7; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+        .explanation {
+            display: none;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        .explanation.show { display: block; animation: slideDown 0.3s; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .explanation-title { font-weight: bold; color: #856404; margin-bottom: 5px; }
+        .explanation-text { color: #856404; }
+        .error-message { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: none; }
+        .hidden { display: none !important; }
+        @media (max-width: 600px) {
+            h1 { font-size: 1.5em; }
+            .choice-btn { padding: 20px 15px; font-size: 1em; }
+            .score-panel { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎧 Number Hearing Quiz</h1>
+            <p class="subtitle">Endless Mode - Practice English Numbers</p>
+            <div class="score-panel">
+                <div class="score-item">
+                    <div class="score-label">Current Streak</div>
+                    <div class="score-value" id="currentStreak">0</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">Best Streak</div>
+                    <div class="score-value" id="bestStreak">0</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">Questions Answered</div>
+                    <div class="score-value" id="totalAnswered">0</div>
+                </div>
+            </div>
+        </div>
+        <div class="game-area">
+            <div class="error-message" id="errorMessage"></div>
+            <div class="settings-area" id="settingsArea">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="detailNumbersCheckbox">
+                    <label for="detailNumbersCheckbox">Include detailed numbers (e.g., 12,340 instead of 15,000)</label>
+                </div>
+                <div class="speed-control">
+                    <label for="speedSlider">Speech Speed: <span id="speedValue">1.0</span>x</label>
+                    <input type="range" id="speedSlider" class="speed-slider" min="0.5" max="2.0" step="0.1" value="1.0">
+                </div>
+            </div>
+            <div class="difficulty-select" id="difficultySelect">
+                <button class="difficulty-btn" data-level="beginner">Beginner<br><small>$1K ~ $100K</small></button>
+                <button class="difficulty-btn" data-level="intermediate">Intermediate<br><small>$100K ~ $1B</small></button>
+                <button class="difficulty-btn" data-level="advanced">Advanced<br><small>$1M ~ $1T</small></button>
+            </div>
+            <div class="question-area" id="questionArea">
+                <div class="question-number" id="questionNumber">Question #1</div>
+                <div class="question-text" id="questionText">Get ready...</div>
+                <div class="controls">
+                    <button class="btn btn-secondary" id="repeatBtn">🔄 Repeat</button>
+                    <button class="btn btn-secondary" id="backBtn">⬅️ Change Difficulty</button>
+                </div>
+                <div class="choices" id="choices"></div>
+                <div class="explanation" id="explanation">
+                    <div class="explanation-title">Explanation:</div>
+                    <div class="explanation-text" id="explanationText"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+const ctx = new (window.AudioContext || window.webkitAudioContext)();
+function playCorrectSound() {
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.setValueAtTime(1047, ctx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3);
+}
+function playIncorrectSound() {
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(200, ctx.currentTime);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3);
+}
+
+const questions = {
+    beginner: [
+        {id:"b001",text:"This item costs fifteen dollars",correct:"$15",choices:["$15","$50","$1,500","$50,000"],explanation:"'Fifteen' vs 'fifty' - listen for '-teen' ending",detailNumbers:false},
+        {id:"b002",text:"The price is fifteen dollars",correct:"$15",choices:["$15","$50","$1,500","$50,000"],explanation:"Fifteen (15) not fifty (50)",detailNumbers:false},
+        {id:"b003",text:"It costs thirteen thousand dollars",correct:"$13,000",choices:["$13,000","$30,000","$1,300","$3,000"],explanation:"'Thirteen' has stress on '-teen'",detailNumbers:false},
+        {id:"b004",text:"The ticket price is thirteen thousand dollars",correct:"$13,000",choices:["$13,000","$30,000","$1,300","$3,000"],explanation:"'Thirteen' vs 'thirty' - different stress patterns",detailNumbers:false},
+        {id:"b005",text:"This bag costs fifty thousand dollars",correct:"$50,000",choices:["$15,000","$50,000","$5,000","$500,000"],explanation:"'Fifty' has stress on 'fif-', not '-ty'",detailNumbers:false},
+        {id:"b006",text:"The monthly rent is eighteen hundred dollars",correct:"$1,800",choices:["$1,800","$8,000","$800","$18,000"],explanation:"'Eighteen hundred' = 1,800",detailNumbers:false},
+        {id:"b007",text:"Your total is fourteen thousand dollars",correct:"$14,000",choices:["$14,000","$40,000","$1,400","$4,000"],explanation:"'Fourteen' vs 'forty'",detailNumbers:false},
+        {id:"b008",text:"This watch costs sixteen thousand dollars",correct:"$16,000",choices:["$16,000","$60,000","$1,600","$6,000"],explanation:"'Sixteen' vs 'sixty'",detailNumbers:false},
+        {id:"b009",text:"The deposit is twelve thousand dollars",correct:"$12,000",choices:["$12,000","$20,000","$1,200","$2,000"],explanation:"'Twelve' vs 'twenty'",detailNumbers:false},
+        {id:"b010",text:"It's priced at seventeen thousand dollars",correct:"$17,000",choices:["$17,000","$70,000","$1,700","$7,000"],explanation:"'Seventeen' vs 'seventy'",detailNumbers:false},
+        {id:"b011",text:"The fee is nineteen thousand dollars",correct:"$19,000",choices:["$19,000","$90,000","$1,900","$9,000"],explanation:"'Nineteen' vs 'ninety'",detailNumbers:false},
+        {id:"b012",text:"This costs eleven thousand dollars",correct:"$11,000",choices:["$11,000","$110,000","$1,100","$10,000"],explanation:"'Eleven thousand' - clear pronunciation",detailNumbers:false},
+        {id:"b013",text:"The laptop is thirteen hundred dollars",correct:"$1,300",choices:["$1,300","$3,000","$130","$13,000"],explanation:"'Thirteen hundred' = 1,300",detailNumbers:false},
+        {id:"b014",text:"It'll be fifteen hundred dollars",correct:"$1,500",choices:["$1,500","$5,000","$150","$15,000"],explanation:"'Fifteen hundred' = 1,500",detailNumbers:false},
+        {id:"b015",text:"That'll cost eighteen thousand dollars",correct:"$18,000",choices:["$18,000","$80,000","$1,800","$8,000"],explanation:"'Eighteen' vs 'eighty'",detailNumbers:false},
+        {id:"b016",text:"The price is twelve thousand three hundred forty dollars",correct:"$12,340",choices:["$12,340","$13,340","$12,430","$13,430"],explanation:"Complex: 'twelve' + 'three hundred' + 'forty'",detailNumbers:true},
+        {id:"b017",text:"Your total is thirteen thousand four hundred fifty dollars",correct:"$13,450",choices:["$13,450","$14,450","$13,550","$14,550"],explanation:"'Thirteen' + 'four hundred' + 'fifty'",detailNumbers:true},
+        {id:"b018",text:"This watch costs fifteen thousand six hundred seventy-eight dollars",correct:"$15,678",choices:["$15,678","$16,678","$15,778","$16,778"],explanation:"Multi-part: 'fifteen' + 'six hundred' + 'seventy-eight'",detailNumbers:true},
+        {id:"b019",text:"The laptop is nineteen thousand nine hundred ninety-nine dollars",correct:"$19,999",choices:["$19,999","$18,999","$19,899","$18,899"],explanation:"'Nineteen' + 'nine hundred' + 'ninety-nine'",detailNumbers:true},
+        {id:"b020",text:"I saved fourteen thousand seven hundred twenty dollars",correct:"$14,720",choices:["$14,720","$17,420","$14,270","$17,270"],explanation:"'Fourteen' + 'seven hundred' + 'twenty'",detailNumbers:true},
+        {id:"b021",text:"The fee is sixteen thousand five hundred thirty-two dollars",correct:"$16,532",choices:["$16,532","$17,532","$16,523","$17,523"],explanation:"Complex breakdown needed",detailNumbers:true},
+        {id:"b022",text:"It costs eleven thousand eight hundred ninety dollars",correct:"$11,890",choices:["$11,890","$12,890","$11,980","$12,980"],explanation:"'Eleven' + 'eight hundred' + 'ninety'",detailNumbers:true},
+        {id:"b023",text:"This bag is twenty-three thousand four hundred fifty-six dollars",correct:"$23,456",choices:["$23,456","$32,456","$23,465","$32,465"],explanation:"'Twenty-three' + detailed parts",detailNumbers:true},
+        {id:"b024",text:"The ticket costs seventeen thousand six hundred fifty-four dollars",correct:"$17,654",choices:["$17,654","$16,654","$17,645","$16,645"],explanation:"'Seventeen' + 'six hundred' + 'fifty-four'",detailNumbers:true},
+        {id:"b025",text:"Your deposit is twelve thousand five hundred sixty-seven dollars",correct:"$12,567",choices:["$12,567","$13,567","$12,576","$13,576"],explanation:"'Twelve' + 'five hundred' + 'sixty-seven'",detailNumbers:true},
+        {id:"b026",text:"This costs fourteen thousand three hundred twenty-one dollars",correct:"$14,321",choices:["$14,321","$13,421","$14,312","$13,412"],explanation:"Detailed number pattern",detailNumbers:true},
+        {id:"b027",text:"The rent is nineteen thousand eight hundred seventy-six dollars",correct:"$19,876",choices:["$19,876","$18,976","$19,867","$18,967"],explanation:"Complex breakdown",detailNumbers:true},
+        {id:"b028",text:"It's priced at fifteen thousand four hundred thirty-two dollars",correct:"$15,432",choices:["$15,432","$14,532","$15,423","$14,523"],explanation:"'Fifteen' + detailed parts",detailNumbers:true},
+        {id:"b029",text:"This item is thirteen thousand seven hundred eighty-nine dollars",correct:"$13,789",choices:["$13,789","$14,789","$13,798","$14,798"],explanation:"'Thirteen' + 'seven hundred' + 'eighty-nine'",detailNumbers:true},
+        {id:"b030",text:"The fee comes to eighteen thousand six hundred fifty-four dollars",correct:"$18,654",choices:["$18,654","$17,654","$18,645","$17,645"],explanation:"'Eighteen' + complex parts",detailNumbers:true}
+    ],
+    intermediate: [
+        {id:"i001",text:"The house price is one hundred fifty thousand dollars",correct:"$150,000",choices:["$150,000","$500,000","$15,000","$1,500,000"],explanation:"'One hundred fifty thousand'",detailNumbers:false},
+        {id:"i002",text:"It's priced at five hundred thousand dollars",correct:"$500,000",choices:["$500,000","$5,000,000","$50,000","$50,000,000"],explanation:"'Five hundred thousand' vs 'five million'",detailNumbers:false},
+        {id:"i003",text:"The damage was approximately fifteen million dollars",correct:"$15,000,000",choices:["$15,000,000","$50,000,000","$1,500,000","$150,000"],explanation:"'Fifteen million' - note 'million'",detailNumbers:false},
+        {id:"i004",text:"Revenue reached fifty million dollars",correct:"$50,000,000",choices:["$50,000,000","$500,000,000","$5,000,000","$500,000"],explanation:"'Fifty' vs 'fifteen'",detailNumbers:false},
+        {id:"i005",text:"The investment is seven hundred fifty thousand dollars",correct:"$750,000",choices:["$750,000","$7,500,000","$75,000","$75,000,000"],explanation:"'Seven hundred fifty' + 'thousand'",detailNumbers:false},
+        {id:"i006",text:"Market cap reached one point five billion dollars",correct:"$1,500,000,000",choices:["$15,000,000","$150,000,000","$1,500,000,000","$15,000,000,000"],explanation:"'One point five billion'",detailNumbers:false},
+        {id:"i007",text:"Sales totaled thirteen million dollars",correct:"$13,000,000",choices:["$13,000,000","$30,000,000","$1,300,000","$3,000,000"],explanation:"'Thirteen million' vs 'thirty million'",detailNumbers:false},
+        {id:"i008",text:"Total expenses were two hundred million dollars",correct:"$200,000,000",choices:["$200,000,000","$2,000,000,000","$20,000,000","$2,000,000"],explanation:"'Two hundred million'",detailNumbers:false},
+        {id:"i009",text:"The settlement was eighteen million dollars",correct:"$18,000,000",choices:["$18,000,000","$80,000,000","$1,800,000","$8,000,000"],explanation:"'Eighteen' vs 'eighty'",detailNumbers:false},
+        {id:"i010",text:"Property value is nine hundred thousand dollars",correct:"$900,000",choices:["$900,000","$9,000,000","$90,000","$90,000,000"],explanation:"'Nine hundred thousand'",detailNumbers:false},
+        {id:"i011",text:"The budget is three hundred thousand dollars",correct:"$300,000",choices:["$300,000","$3,000,000","$30,000","$30,000,000"],explanation:"'Three hundred thousand'",detailNumbers:false},
+        {id:"i012",text:"It costs fourteen million dollars",correct:"$14,000,000",choices:["$14,000,000","$40,000,000","$1,400,000","$4,000,000"],explanation:"'Fourteen' vs 'forty'",detailNumbers:false},
+        {id:"i013",text:"The facility is sixteen million dollars",correct:"$16,000,000",choices:["$16,000,000","$60,000,000","$1,600,000","$6,000,000"],explanation:"'Sixteen' vs 'sixty'",detailNumbers:false},
+        {id:"i014",text:"Annual revenue hit twelve million dollars",correct:"$12,000,000",choices:["$12,000,000","$20,000,000","$1,200,000","$2,000,000"],explanation:"'Twelve' vs 'twenty'",detailNumbers:false},
+        {id:"i015",text:"The contract is seventeen million dollars",correct:"$17,000,000",choices:["$17,000,000","$70,000,000","$1,700,000","$7,000,000"],explanation:"'Seventeen' vs 'seventy'",detailNumbers:false},
+        {id:"i016",text:"Property value is one hundred thirty-four thousand five hundred sixty-seven dollars",correct:"$134,567",choices:["$134,567","$143,567","$134,657","$143,657"],explanation:"Complex: 'one hundred thirty-four' + parts",detailNumbers:true},
+        {id:"i017",text:"Total assets are one million two hundred thirty-four thousand five hundred sixty-seven dollars",correct:"$1,234,567",choices:["$1,234,567","$1,243,567","$1,234,657","$1,243,657"],explanation:"Large complex number",detailNumbers:true},
+        {id:"i018",text:"The facility cost fifteen million six hundred seventy-eight thousand nine hundred dollars",correct:"$15,678,900",choices:["$15,678,900","$16,678,900","$15,768,900","$16,768,900"],explanation:"Very complex multi-part number",detailNumbers:true},
+        {id:"i019",text:"Market cap is twelve million three hundred forty-five thousand six hundred seventy-eight dollars",correct:"$12,345,678",choices:["$12,345,678","$13,345,678","$12,346,678","$13,346,678"],explanation:"Sequential pattern",detailNumbers:true},
+        {id:"i020",text:"The contract is eighteen million seven hundred sixty-five thousand four hundred thirty-two dollars",correct:"$18,765,432",choices:["$18,765,432","$17,765,432","$18,756,432","$17,756,432"],explanation:"'Eighteen' + complex parts",detailNumbers:true},
+        {id:"i021",text:"Revenue hit twenty-three million four hundred fifty-six thousand seven hundred eighty-nine dollars",correct:"$23,456,789",choices:["$23,456,789","$32,456,789","$23,457,789","$32,457,789"],explanation:"Very long detailed number",detailNumbers:true},
+        {id:"i022",text:"Assets total fourteen million six hundred fifty-four thousand three hundred twenty-one dollars",correct:"$14,654,321",choices:["$14,654,321","$13,654,321","$14,645,321","$13,645,321"],explanation:"Complex descending pattern",detailNumbers:true},
+        {id:"i023",text:"The investment is nineteen million eight hundred seventy-six thousand five hundred forty-three dollars",correct:"$19,876,543",choices:["$19,876,543","$18,976,543","$19,867,543","$18,967,543"],explanation:"Complex pattern",detailNumbers:true},
+        {id:"i024",text:"This costs eleven million two hundred thirty-four thousand five hundred sixty-seven dollars",correct:"$11,234,567",choices:["$11,234,567","$12,234,567","$11,235,567","$12,235,567"],explanation:"'Eleven million' + detailed parts",detailNumbers:true},
+        {id:"i025",text:"The budget is sixteen million five hundred forty-three thousand two hundred ten dollars",correct:"$16,543,210",choices:["$16,543,210","$17,543,210","$16,542,210","$17,542,210"],explanation:"Descending pattern",detailNumbers:true},
+        {id:"i026",text:"Property value reached thirteen million four hundred fifty-six thousand seven hundred eighty-nine dollars",correct:"$13,456,789",choices:["$13,456,789","$14,456,789","$13,457,789","$14,457,789"],explanation:"Sequential complex",detailNumbers:true},
+        {id:"i027",text:"Sales hit seventeen million six hundred fifty-four thousand three hundred twenty-one dollars",correct:"$17,654,321",choices:["$17,654,321","$16,654,321","$17,645,321","$16,645,321"],explanation:"Complex pattern",detailNumbers:true},
+        {id:"i028",text:"The fee is fifteen million four hundred thirty-two thousand one hundred nine dollars",correct:"$15,432,109",choices:["$15,432,109","$14,532,109","$15,423,109","$14,523,109"],explanation:"Irregular pattern",detailNumbers:true},
+        {id:"i029",text:"It totals twelve million nine hundred eighty-seven thousand six hundred fifty-four dollars",correct:"$12,987,654",choices:["$12,987,654","$13,987,654","$12,978,654","$13,978,654"],explanation:"Complex number",detailNumbers:true},
+        {id:"i030",text:"The contract is nineteen million seven hundred sixty-five thousand four hundred thirty-two dollars",correct:"$19,765,432",choices:["$19,765,432","$18,765,432","$19,756,432","$18,756,432"],explanation:"Detailed breakdown",detailNumbers:true}
+    ],
+    advanced: [
+        {id:"a001",text:"GDP increased to fifteen trillion dollars",correct:"$15T",choices:["$15T","$50T","$1.5T","$150T"],explanation:"'Fifteen trillion' - 1T = 1,000B",detailNumbers:false},
+        {id:"a002",text:"The national debt is approximately thirty point five trillion dollars",correct:"$30.5T",choices:["$30.5T","$13.5T","$35T","$3.5T"],explanation:"'Thirty point five trillion'",detailNumbers:false},
+        {id:"a003",text:"Infrastructure spending totaled one point five trillion dollars",correct:"$1.5T",choices:["$1.5T","$15T","$5T","$500B"],explanation:"'One point five trillion'",detailNumbers:false},
+        {id:"a004",text:"The bailout package was seven hundred fifty billion dollars",correct:"$750B",choices:["$750B","$7.5T","$75B","$175B"],explanation:"'Seven hundred fifty billion'",detailNumbers:false},
+        {id:"a005",text:"Market capitalization exceeded eighteen trillion dollars",correct:"$18T",choices:["$18T","$80T","$1.8T","$8T"],explanation:"'Eighteen' vs 'eighty'",detailNumbers:false},
+        {id:"a006",text:"The fund manages ninety-five billion dollars",correct:"$95B",choices:["$95B","$950B","$9.5B","$59B"],explanation:"'Ninety-five billion'",detailNumbers:false},
+        {id:"a007",text:"Global market reached one hundred twenty-three billion dollars",correct:"$123B",choices:["$123B","$133B","$23B","$233B"],explanation:"'One hundred twenty-three billion'",detailNumbers:false},
+        {id:"a008",text:"The merger was valued at fifty point seven billion dollars",correct:"$50.7B",choices:["$50.7B","$57B","$15.7B","$70.5B"],explanation:"'Fifty point seven billion'",detailNumbers:false},
+        {id:"a009",text:"Annual trade hit thirteen point two trillion dollars",correct:"$13.2T",choices:["$13.2T","$32T","$1.32T","$3.2T"],explanation:"'Thirteen point two trillion'",detailNumbers:false},
+        {id:"a010",text:"The stimulus was two point three trillion dollars",correct:"$2.3T",choices:["$2.3T","$3.2T","$230B","$23T"],explanation:"'Two point three trillion'",detailNumbers:false},
+        {id:"a011",text:"Revenue reached fourteen trillion dollars",correct:"$14T",choices:["$14T","$40T","$1.4T","$4T"],explanation:"'Fourteen' vs 'forty'",detailNumbers:false},
+        {id:"a012",text:"Assets total sixteen trillion dollars",correct:"$16T",choices:["$16T","$60T","$1.6T","$6T"],explanation:"'Sixteen' vs 'sixty'",detailNumbers:false},
+        {id:"a013",text:"The budget is twelve trillion dollars",correct:"$12T",choices:["$12T","$20T","$1.2T","$2T"],explanation:"'Twelve' vs 'twenty'",detailNumbers:false},
+        {id:"a014",text:"Market size hit seventeen trillion dollars",correct:"$17T",choices:["$17T","$70T","$1.7T","$7T"],explanation:"'Seventeen' vs 'seventy'",detailNumbers:false},
+        {id:"a015",text:"The contract is nineteen trillion dollars",correct:"$19T",choices:["$19T","$90T","$1.9T","$9T"],explanation:"'Nineteen' vs 'ninety'",detailNumbers:false},
+        {id:"a016",text:"Global market size reached one billion two hundred thirty-four million five hundred sixty-seven thousand eight hundred ninety dollars",correct:"$1,234,567,890",choices:["$1,234,567,890","$1,243,567,890","$1,234,576,890","$1,243,576,890"],explanation:"Extremely complex billion-level",detailNumbers:true},
+        {id:"a017",text:"The merger was valued at twelve billion three hundred forty-five million six hundred seventy-eight thousand nine hundred dollars",correct:"$12,345,678,900",choices:["$12,345,678,900","$13,345,678,900","$12,346,678,900","$13,346,678,900"],explanation:"Sequential billion-scale",detailNumbers:true},
+        {id:"a018",text:"Total assets reached one hundred twenty-three billion four hundred fifty-six million seven hundred eighty-nine thousand dollars",correct:"$123,456,789,000",choices:["$123,456,789,000","$132,456,789,000","$123,465,789,000","$132,465,789,000"],explanation:"Hundreds of billions",detailNumbers:true},
+        {id:"a019",text:"The fund manages ninety-eight billion seven hundred sixty-five million four hundred thirty-two thousand one hundred dollars",correct:"$98,765,432,100",choices:["$98,765,432,100","$89,765,432,100","$98,756,432,100","$89,756,432,100"],explanation:"Complex descending pattern",detailNumbers:true},
+        {id:"a020",text:"Annual revenue hit fifty-six billion seven hundred eighty-nine million twelve thousand three hundred forty-five dollars",correct:"$56,789,012,345",choices:["$56,789,012,345","$65,789,012,345","$56,798,012,345","$65,798,012,345"],explanation:"Irregular pattern",detailNumbers:true},
+        {id:"a021",text:"Assets total twenty-three billion four hundred fifty-six million seven hundred eighty-nine thousand twelve dollars",correct:"$23,456,789,012",choices:["$23,456,789,012","$32,456,789,012","$23,457,789,012","$32,457,789,012"],explanation:"Complex sequential",detailNumbers:true},
+        {id:"a022",text:"The investment is fourteen billion six hundred fifty-four million three hundred twenty-one thousand nine hundred eighty-seven dollars",correct:"$14,654,321,987",choices:["$14,654,321,987","$13,654,321,987","$14,645,321,987","$13,645,321,987"],explanation:"Descending complex",detailNumbers:true},
+        {id:"a023",text:"Market cap reached nineteen billion eight hundred seventy-six million five hundred forty-three thousand two hundred ten dollars",correct:"$19,876,543,210",choices:["$19,876,543,210","$18,976,543,210","$19,867,543,210","$18,967,543,210"],explanation:"Descending pattern",detailNumbers:true},
+        {id:"a024",text:"Revenue hit eleven billion two hundred thirty-four million five hundred sixty-seven thousand eight hundred ninety dollars",correct:"$11,234,567,890",choices:["$11,234,567,890","$12,234,567,890","$11,235,567,890","$12,235,567,890"],explanation:"Sequential complex",detailNumbers:true},
+        {id:"a025",text:"The budget is sixteen billion five hundred forty-three million two hundred ten thousand nine hundred eighty-seven dollars",correct:"$16,543,210,987",choices:["$16,543,210,987","$17,543,210,987","$16,542,210,987","$17,542,210,987"],explanation:"Complex pattern",detailNumbers:true},
+        {id:"a026",text:"Sales reached thirteen billion four hundred fifty-six million seven hundred eighty-nine thousand twelve dollars",correct:"$13,456,789,012",choices:["$13,456,789,012","$14,456,789,012","$13,457,789,012","$14,457,789,012"],explanation:"Sequential",detailNumbers:true},
+        {id:"a027",text:"Total value is seventeen billion six hundred fifty-four million three hundred twenty-one thousand nine hundred eighty-seven dollars",correct:"$17,654,321,987",choices:["$17,654,321,987","$16,654,321,987","$17,645,321,987","$16,645,321,987"],explanation:"Descending complex",detailNumbers:true},
+        {id:"a028",text:"The contract totals fifteen billion four hundred thirty-two million one hundred nine thousand eight hundred seventy-six dollars",correct:"$15,432,109,876",choices:["$15,432,109,876","$14,532,109,876","$15,423,109,876","$14,523,109,876"],explanation:"Irregular complex",detailNumbers:true},
+        {id:"a029",text:"Assets are twelve billion nine hundred eighty-seven million six hundred fifty-four thousand three hundred twenty-one dollars",correct:"$12,987,654,321",choices:["$12,987,654,321","$13,987,654,321","$12,978,654,321","$13,978,654,321"],explanation:"Descending",detailNumbers:true},
+        {id:"a030",text:"Market value hit nineteen billion seven hundred sixty-five million four hundred thirty-two thousand one hundred nine dollars",correct:"$19,765,432,109",choices:["$19,765,432,109","$18,765,432,109","$19,756,432,109","$18,756,432,109"],explanation:"Complex descending",detailNumbers:true}
+    ]
+};
+
+let currentLevel, currentQuestion, askedQuestionIds = [], currentStreak = 0, bestStreak = 0, totalAnswered = 0;
+let speechRate = 1.0, synth = window.speechSynthesis, voices = [], includeDetailNumbers = false, isAnswered = false;
+const settingsArea = document.getElementById('settingsArea'), difficultySelect = document.getElementById('difficultySelect');
+const questionArea = document.getElementById('questionArea'), questionNumber = document.getElementById('questionNumber');
+const questionText = document.getElementById('questionText'), choicesDiv = document.getElementById('choices');
+const repeatBtn = document.getElementById('repeatBtn'), backBtn = document.getElementById('backBtn');
+const speedSlider = document.getElementById('speedSlider'), speedValue = document.getElementById('speedValue');
+const explanationDiv = document.getElementById('explanation'), explanationText = document.getElementById('explanationText');
+const errorMessage = document.getElementById('errorMessage'), currentStreakDisplay = document.getElementById('currentStreak');
+const bestStreakDisplay = document.getElementById('bestStreak'), totalAnsweredDisplay = document.getElementById('totalAnswered');
+const detailNumbersCheckbox = document.getElementById('detailNumbersCheckbox');
+
+function init() {
+    if (!('speechSynthesis' in window)) {
+        errorMessage.textContent = 'Your browser does not support Web Speech API. Please use Chrome, Edge, or Safari.';
+        errorMessage.style.display = 'block';
+        return;
+    }
+    loadVoices();
+    if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoices;
+    loadStats();
+    document.querySelectorAll('.difficulty-btn').forEach(btn => {
+        btn.addEventListener('click', () => selectDifficulty(btn.dataset.level));
+    });
+    repeatBtn.addEventListener('click', repeatAudio);
+    backBtn.addEventListener('click', backToDifficulty);
+    speedSlider.addEventListener('input', (e) => {
+        speechRate = parseFloat(e.target.value);
+        speedValue.textContent = speechRate.toFixed(1);
+    });
+    detailNumbersCheckbox.addEventListener('change', (e) => {
+        includeDetailNumbers = e.target.checked;
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'r' || e.key === 'R') {
+            if (!repeatBtn.disabled) repeatAudio();
+        } else if (e.key >= '1' && e.key <= '4') {
+            const choices = document.querySelectorAll('.choice-btn');
+            if (choices[parseInt(e.key) - 1] && !choices[parseInt(e.key) - 1].disabled) {
+                choices[parseInt(e.key) - 1].click();
+            }
+        }
+    });
+    difficultySelect.style.display = 'flex';
+}
+
+function loadVoices() { voices = synth.getVoices(); }
+function loadStats() {
+    bestStreak = parseInt(localStorage.getItem('bestStreak') || '0');
+    bestStreakDisplay.textContent = bestStreak;
+}
+function saveStats() { localStorage.setItem('bestStreak', bestStreak); }
+function getNextQuestion(level) {
+    let pool = questions[level];
+    if (!includeDetailNumbers) pool = pool.filter(q => !q.detailNumbers);
+    pool = pool.filter(q => !askedQuestionIds.includes(q.id));
+    if (pool.length === 0) {
+        askedQuestionIds = [];
+        pool = questions[level];
+        if (!includeDetailNumbers) pool = pool.filter(q => !q.detailNumbers);
+    }
+    const question = pool[Math.floor(Math.random() * pool.length)];
+    askedQuestionIds.push(question.id);
+    return question;
+}
+function selectDifficulty(level) {
+    currentLevel = level;
+    askedQuestionIds = [];
+    currentStreak = 0;
+    totalAnswered = 0;
+    updateStreak();
+    updateTotalAnswered();
+    if (level === 'beginner') speechRate = 0.8;
+    else if (level === 'intermediate') speechRate = 1.0;
+    else speechRate = 1.2;
+    speedSlider.value = speechRate;
+    speedValue.textContent = speechRate.toFixed(1);
+    settingsArea.style.display = 'none';
+    difficultySelect.style.display = 'none';
+    questionArea.style.display = 'block';
+    loadQuestion();
+}
+function loadQuestion() {
+    currentQuestion = getNextQuestion(currentLevel);
+    isAnswered = false;
+    questionNumber.textContent = `Question #${totalAnswered + 1}`;
+    questionText.textContent = 'Get ready...';
+    explanationDiv.classList.remove('show');
+    const shuffledChoices = [...currentQuestion.choices].sort(() => Math.random() - 0.5);
+    choicesDiv.innerHTML = '';
+    shuffledChoices.forEach(choice => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.textContent = choice;
+        btn.addEventListener('click', () => checkAnswer(choice, btn));
+        choicesDiv.appendChild(btn);
+    });
+    document.querySelectorAll('.choice-btn').forEach(btn => btn.disabled = true);
+    repeatBtn.disabled = true;
+    setTimeout(() => { playAudio(); }, 1000);
+}
+function playAudio() {
+    if (!currentQuestion) return;
+    const utterance = new SpeechSynthesisUtterance(currentQuestion.text);
+    utterance.lang = 'en-US';
+    utterance.rate = speechRate;
+    const enVoice = voices.find(v => v.lang.includes('en-US') || v.lang.includes('en'));
+    if (enVoice) utterance.voice = enVoice;
+    utterance.onstart = () => {
+        repeatBtn.disabled = true;
+        questionText.textContent = '🔊 Listening...';
+    };
+    utterance.onend = () => {
+        repeatBtn.disabled = false;
+        document.querySelectorAll('.choice-btn').forEach(btn => btn.disabled = false);
+        questionText.textContent = 'Choose the correct answer:';
+    };
+    synth.speak(utterance);
+}
+function repeatAudio() {
+    if (!currentQuestion || isAnswered) return;
+    const utterance = new SpeechSynthesisUtterance(currentQuestion.text);
+    utterance.lang = 'en-US';
+    utterance.rate = speechRate;
+    const enVoice = voices.find(v => v.lang.includes('en-US') || v.lang.includes('en'));
+    if (enVoice) utterance.voice = enVoice;
+    utterance.onstart = () => {
+        repeatBtn.disabled = true;
+        questionText.textContent = '🔊 Listening...';
+    };
+    utterance.onend = () => {
+        repeatBtn.disabled = false;
+        questionText.textContent = 'Choose the correct answer:';
+    };
+    synth.speak(utterance);
+}
+function checkAnswer(selected, btn) {
+    if (isAnswered) return;
+    isAnswered = true;
+    totalAnswered++;
+    updateTotalAnswered();
+    document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+    if (selected === currentQuestion.correct) {
+        btn.classList.add('correct');
+        currentStreak++;
+        updateStreak();
+        playCorrectSound();
+        setTimeout(() => { loadQuestion(); }, 500);
+    } else {
+        btn.classList.add('incorrect');
+        currentStreak = 0;
+        updateStreak();
+        document.querySelectorAll('.choice-btn').forEach(b => {
+            if (b.textContent === currentQuestion.correct) b.classList.add('correct');
+        });
+        explanationText.textContent = currentQuestion.explanation;
+        explanationDiv.classList.add('show');
+        playIncorrectSound();
+        setTimeout(() => { loadQuestion(); }, 2500);
+    }
+}
+function updateStreak() {
+    currentStreakDisplay.textContent = currentStreak;
+    if (currentStreak > bestStreak) {
+        bestStreak = currentStreak;
+        bestStreakDisplay.textContent = bestStreak;
+        saveStats();
+    }
+}
+function updateTotalAnswered() { totalAnsweredDisplay.textContent = totalAnswered; }
+function backToDifficulty() {
+    questionArea.style.display = 'none';
+    settingsArea.style.display = 'block';
+    difficultySelect.style.display = 'flex';
+    currentLevel = null;
+    currentQuestion = null;
+}
+window.addEventListener('load', init);
+    </script>
+</body>
+</html>
