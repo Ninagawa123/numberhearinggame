@@ -16,23 +16,22 @@
         .container { max-width: 800px; margin: 0 auto; }
         .header {
             background: white;
-            border-radius: 15px;
-            padding: 30px;
+            border-radius: 12px;
+            padding: 20px;
             margin-bottom: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             text-align: center;
         }
-        h1 { color: #667eea; margin-bottom: 10px; font-size: 2em; }
-        .subtitle { color: #666; font-size: 0.9em; margin-bottom: 20px; }
+        h1 { color: #667eea; margin-bottom: 5px; font-size: 1.8em; }
+        .subtitle { color: #666; font-size: 0.85em; margin-bottom: 15px; }
         .score-panel {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
         }
-        .score-item { background: #f8f9fa; padding: 15px; border-radius: 10px; text-align: center; }
-        .score-label { font-size: 0.8em; color: #666; margin-bottom: 5px; }
-        .score-value { font-size: 1.5em; font-weight: bold; color: #667eea; }
+        .score-item { background: #f8f9fa; padding: 12px; border-radius: 8px; text-align: center; }
+        .score-label { font-size: 0.75em; color: #666; margin-bottom: 3px; }
+        .score-value { font-size: 1.4em; font-weight: bold; color: #667eea; }
         .game-area { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         .settings-area { background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
         .checkbox-container { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
@@ -123,7 +122,6 @@
         @media (max-width: 600px) {
             h1 { font-size: 1.5em; }
             .choice-btn { padding: 20px 15px; font-size: 1em; }
-            .score-panel { grid-template-columns: 1fr 1fr; }
         }
     </style>
 </head>
@@ -141,10 +139,6 @@
                     <div class="score-label">Best Streak</div>
                     <div class="score-value" id="bestStreak">0</div>
                 </div>
-                <div class="score-item">
-                    <div class="score-label">Questions Answered</div>
-                    <div class="score-value" id="totalAnswered">0</div>
-                </div>
             </div>
         </div>
         <div class="game-area">
@@ -153,6 +147,10 @@
                 <div class="checkbox-container">
                     <input type="checkbox" id="detailNumbersCheckbox">
                     <label for="detailNumbersCheckbox">Include detailed numbers (e.g., 12,340 instead of 15,000)</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="japaneseDisplay">
+                    <label for="japaneseDisplay">日本語表記回答</label>
                 </div>
                 <div class="speed-control">
                     <label for="speedSlider">Speech Speed: <span id="speedValue">1.0</span>x</label>
@@ -180,6 +178,7 @@
         </div>
     </div>
     <script>
+// Web Audio APIで正解音・不正解音を生成
 const ctx = new (window.AudioContext || window.webkitAudioContext)();
 function playCorrectSound() {
     const osc = ctx.createOscillator(), gain = ctx.createGain();
@@ -199,106 +198,1945 @@ function playIncorrectSound() {
     osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3);
 }
 
-const questions = {
-    beginner: [
-        {id:"b001",text:"This item costs fifteen dollars",correct:"$15",choices:["$15","$50","$1,500","$50,000"],explanation:"'Fifteen' vs 'fifty' - listen for '-teen' ending",detailNumbers:false},
-        {id:"b002",text:"The price is fifteen dollars",correct:"$15",choices:["$15","$50","$1,500","$50,000"],explanation:"Fifteen (15) not fifty (50)",detailNumbers:false},
-        {id:"b003",text:"It costs thirteen thousand dollars",correct:"$13,000",choices:["$13,000","$30,000","$1,300","$3,000"],explanation:"'Thirteen' has stress on '-teen'",detailNumbers:false},
-        {id:"b004",text:"The ticket price is thirteen thousand dollars",correct:"$13,000",choices:["$13,000","$30,000","$1,300","$3,000"],explanation:"'Thirteen' vs 'thirty' - different stress patterns",detailNumbers:false},
-        {id:"b005",text:"This bag costs fifty thousand dollars",correct:"$50,000",choices:["$15,000","$50,000","$5,000","$500,000"],explanation:"'Fifty' has stress on 'fif-', not '-ty'",detailNumbers:false},
-        {id:"b006",text:"The monthly rent is eighteen hundred dollars",correct:"$1,800",choices:["$1,800","$8,000","$800","$18,000"],explanation:"'Eighteen hundred' = 1,800",detailNumbers:false},
-        {id:"b007",text:"Your total is fourteen thousand dollars",correct:"$14,000",choices:["$14,000","$40,000","$1,400","$4,000"],explanation:"'Fourteen' vs 'forty'",detailNumbers:false},
-        {id:"b008",text:"This watch costs sixteen thousand dollars",correct:"$16,000",choices:["$16,000","$60,000","$1,600","$6,000"],explanation:"'Sixteen' vs 'sixty'",detailNumbers:false},
-        {id:"b009",text:"The deposit is twelve thousand dollars",correct:"$12,000",choices:["$12,000","$20,000","$1,200","$2,000"],explanation:"'Twelve' vs 'twenty'",detailNumbers:false},
-        {id:"b010",text:"It's priced at seventeen thousand dollars",correct:"$17,000",choices:["$17,000","$70,000","$1,700","$7,000"],explanation:"'Seventeen' vs 'seventy'",detailNumbers:false},
-        {id:"b011",text:"The fee is nineteen thousand dollars",correct:"$19,000",choices:["$19,000","$90,000","$1,900","$9,000"],explanation:"'Nineteen' vs 'ninety'",detailNumbers:false},
-        {id:"b012",text:"This costs eleven thousand dollars",correct:"$11,000",choices:["$11,000","$110,000","$1,100","$10,000"],explanation:"'Eleven thousand' - clear pronunciation",detailNumbers:false},
-        {id:"b013",text:"The laptop is thirteen hundred dollars",correct:"$1,300",choices:["$1,300","$3,000","$130","$13,000"],explanation:"'Thirteen hundred' = 1,300",detailNumbers:false},
-        {id:"b014",text:"It'll be fifteen hundred dollars",correct:"$1,500",choices:["$1,500","$5,000","$150","$15,000"],explanation:"'Fifteen hundred' = 1,500",detailNumbers:false},
-        {id:"b015",text:"That'll cost eighteen thousand dollars",correct:"$18,000",choices:["$18,000","$80,000","$1,800","$8,000"],explanation:"'Eighteen' vs 'eighty'",detailNumbers:false},
-        {id:"b016",text:"The price is twelve thousand three hundred forty dollars",correct:"$12,340",choices:["$12,340","$13,340","$12,430","$13,430"],explanation:"Complex: 'twelve' + 'three hundred' + 'forty'",detailNumbers:true},
-        {id:"b017",text:"Your total is thirteen thousand four hundred fifty dollars",correct:"$13,450",choices:["$13,450","$14,450","$13,550","$14,550"],explanation:"'Thirteen' + 'four hundred' + 'fifty'",detailNumbers:true},
-        {id:"b018",text:"This watch costs fifteen thousand six hundred seventy-eight dollars",correct:"$15,678",choices:["$15,678","$16,678","$15,778","$16,778"],explanation:"Multi-part: 'fifteen' + 'six hundred' + 'seventy-eight'",detailNumbers:true},
-        {id:"b019",text:"The laptop is nineteen thousand nine hundred ninety-nine dollars",correct:"$19,999",choices:["$19,999","$18,999","$19,899","$18,899"],explanation:"'Nineteen' + 'nine hundred' + 'ninety-nine'",detailNumbers:true},
-        {id:"b020",text:"I saved fourteen thousand seven hundred twenty dollars",correct:"$14,720",choices:["$14,720","$17,420","$14,270","$17,270"],explanation:"'Fourteen' + 'seven hundred' + 'twenty'",detailNumbers:true},
-        {id:"b021",text:"The fee is sixteen thousand five hundred thirty-two dollars",correct:"$16,532",choices:["$16,532","$17,532","$16,523","$17,523"],explanation:"Complex breakdown needed",detailNumbers:true},
-        {id:"b022",text:"It costs eleven thousand eight hundred ninety dollars",correct:"$11,890",choices:["$11,890","$12,890","$11,980","$12,980"],explanation:"'Eleven' + 'eight hundred' + 'ninety'",detailNumbers:true},
-        {id:"b023",text:"This bag is twenty-three thousand four hundred fifty-six dollars",correct:"$23,456",choices:["$23,456","$32,456","$23,465","$32,465"],explanation:"'Twenty-three' + detailed parts",detailNumbers:true},
-        {id:"b024",text:"The ticket costs seventeen thousand six hundred fifty-four dollars",correct:"$17,654",choices:["$17,654","$16,654","$17,645","$16,645"],explanation:"'Seventeen' + 'six hundred' + 'fifty-four'",detailNumbers:true},
-        {id:"b025",text:"Your deposit is twelve thousand five hundred sixty-seven dollars",correct:"$12,567",choices:["$12,567","$13,567","$12,576","$13,576"],explanation:"'Twelve' + 'five hundred' + 'sixty-seven'",detailNumbers:true},
-        {id:"b026",text:"This costs fourteen thousand three hundred twenty-one dollars",correct:"$14,321",choices:["$14,321","$13,421","$14,312","$13,412"],explanation:"Detailed number pattern",detailNumbers:true},
-        {id:"b027",text:"The rent is nineteen thousand eight hundred seventy-six dollars",correct:"$19,876",choices:["$19,876","$18,976","$19,867","$18,967"],explanation:"Complex breakdown",detailNumbers:true},
-        {id:"b028",text:"It's priced at fifteen thousand four hundred thirty-two dollars",correct:"$15,432",choices:["$15,432","$14,532","$15,423","$14,523"],explanation:"'Fifteen' + detailed parts",detailNumbers:true},
-        {id:"b029",text:"This item is thirteen thousand seven hundred eighty-nine dollars",correct:"$13,789",choices:["$13,789","$14,789","$13,798","$14,798"],explanation:"'Thirteen' + 'seven hundred' + 'eighty-nine'",detailNumbers:true},
-        {id:"b030",text:"The fee comes to eighteen thousand six hundred fifty-four dollars",correct:"$18,654",choices:["$18,654","$17,654","$18,645","$17,645"],explanation:"'Eighteen' + complex parts",detailNumbers:true}
-    ],
-    intermediate: [
-        {id:"i001",text:"The house price is one hundred fifty thousand dollars",correct:"$150,000",choices:["$150,000","$500,000","$15,000","$1,500,000"],explanation:"'One hundred fifty thousand'",detailNumbers:false},
-        {id:"i002",text:"It's priced at five hundred thousand dollars",correct:"$500,000",choices:["$500,000","$5,000,000","$50,000","$50,000,000"],explanation:"'Five hundred thousand' vs 'five million'",detailNumbers:false},
-        {id:"i003",text:"The damage was approximately fifteen million dollars",correct:"$15,000,000",choices:["$15,000,000","$50,000,000","$1,500,000","$150,000"],explanation:"'Fifteen million' - note 'million'",detailNumbers:false},
-        {id:"i004",text:"Revenue reached fifty million dollars",correct:"$50,000,000",choices:["$50,000,000","$500,000,000","$5,000,000","$500,000"],explanation:"'Fifty' vs 'fifteen'",detailNumbers:false},
-        {id:"i005",text:"The investment is seven hundred fifty thousand dollars",correct:"$750,000",choices:["$750,000","$7,500,000","$75,000","$75,000,000"],explanation:"'Seven hundred fifty' + 'thousand'",detailNumbers:false},
-        {id:"i006",text:"Market cap reached one point five billion dollars",correct:"$1,500,000,000",choices:["$15,000,000","$150,000,000","$1,500,000,000","$15,000,000,000"],explanation:"'One point five billion'",detailNumbers:false},
-        {id:"i007",text:"Sales totaled thirteen million dollars",correct:"$13,000,000",choices:["$13,000,000","$30,000,000","$1,300,000","$3,000,000"],explanation:"'Thirteen million' vs 'thirty million'",detailNumbers:false},
-        {id:"i008",text:"Total expenses were two hundred million dollars",correct:"$200,000,000",choices:["$200,000,000","$2,000,000,000","$20,000,000","$2,000,000"],explanation:"'Two hundred million'",detailNumbers:false},
-        {id:"i009",text:"The settlement was eighteen million dollars",correct:"$18,000,000",choices:["$18,000,000","$80,000,000","$1,800,000","$8,000,000"],explanation:"'Eighteen' vs 'eighty'",detailNumbers:false},
-        {id:"i010",text:"Property value is nine hundred thousand dollars",correct:"$900,000",choices:["$900,000","$9,000,000","$90,000","$90,000,000"],explanation:"'Nine hundred thousand'",detailNumbers:false},
-        {id:"i011",text:"The budget is three hundred thousand dollars",correct:"$300,000",choices:["$300,000","$3,000,000","$30,000","$30,000,000"],explanation:"'Three hundred thousand'",detailNumbers:false},
-        {id:"i012",text:"It costs fourteen million dollars",correct:"$14,000,000",choices:["$14,000,000","$40,000,000","$1,400,000","$4,000,000"],explanation:"'Fourteen' vs 'forty'",detailNumbers:false},
-        {id:"i013",text:"The facility is sixteen million dollars",correct:"$16,000,000",choices:["$16,000,000","$60,000,000","$1,600,000","$6,000,000"],explanation:"'Sixteen' vs 'sixty'",detailNumbers:false},
-        {id:"i014",text:"Annual revenue hit twelve million dollars",correct:"$12,000,000",choices:["$12,000,000","$20,000,000","$1,200,000","$2,000,000"],explanation:"'Twelve' vs 'twenty'",detailNumbers:false},
-        {id:"i015",text:"The contract is seventeen million dollars",correct:"$17,000,000",choices:["$17,000,000","$70,000,000","$1,700,000","$7,000,000"],explanation:"'Seventeen' vs 'seventy'",detailNumbers:false},
-        {id:"i016",text:"Property value is one hundred thirty-four thousand five hundred sixty-seven dollars",correct:"$134,567",choices:["$134,567","$143,567","$134,657","$143,657"],explanation:"Complex: 'one hundred thirty-four' + parts",detailNumbers:true},
-        {id:"i017",text:"Total assets are one million two hundred thirty-four thousand five hundred sixty-seven dollars",correct:"$1,234,567",choices:["$1,234,567","$1,243,567","$1,234,657","$1,243,657"],explanation:"Large complex number",detailNumbers:true},
-        {id:"i018",text:"The facility cost fifteen million six hundred seventy-eight thousand nine hundred dollars",correct:"$15,678,900",choices:["$15,678,900","$16,678,900","$15,768,900","$16,768,900"],explanation:"Very complex multi-part number",detailNumbers:true},
-        {id:"i019",text:"Market cap is twelve million three hundred forty-five thousand six hundred seventy-eight dollars",correct:"$12,345,678",choices:["$12,345,678","$13,345,678","$12,346,678","$13,346,678"],explanation:"Sequential pattern",detailNumbers:true},
-        {id:"i020",text:"The contract is eighteen million seven hundred sixty-five thousand four hundred thirty-two dollars",correct:"$18,765,432",choices:["$18,765,432","$17,765,432","$18,756,432","$17,756,432"],explanation:"'Eighteen' + complex parts",detailNumbers:true},
-        {id:"i021",text:"Revenue hit twenty-three million four hundred fifty-six thousand seven hundred eighty-nine dollars",correct:"$23,456,789",choices:["$23,456,789","$32,456,789","$23,457,789","$32,457,789"],explanation:"Very long detailed number",detailNumbers:true},
-        {id:"i022",text:"Assets total fourteen million six hundred fifty-four thousand three hundred twenty-one dollars",correct:"$14,654,321",choices:["$14,654,321","$13,654,321","$14,645,321","$13,645,321"],explanation:"Complex descending pattern",detailNumbers:true},
-        {id:"i023",text:"The investment is nineteen million eight hundred seventy-six thousand five hundred forty-three dollars",correct:"$19,876,543",choices:["$19,876,543","$18,976,543","$19,867,543","$18,967,543"],explanation:"Complex pattern",detailNumbers:true},
-        {id:"i024",text:"This costs eleven million two hundred thirty-four thousand five hundred sixty-seven dollars",correct:"$11,234,567",choices:["$11,234,567","$12,234,567","$11,235,567","$12,235,567"],explanation:"'Eleven million' + detailed parts",detailNumbers:true},
-        {id:"i025",text:"The budget is sixteen million five hundred forty-three thousand two hundred ten dollars",correct:"$16,543,210",choices:["$16,543,210","$17,543,210","$16,542,210","$17,542,210"],explanation:"Descending pattern",detailNumbers:true},
-        {id:"i026",text:"Property value reached thirteen million four hundred fifty-six thousand seven hundred eighty-nine dollars",correct:"$13,456,789",choices:["$13,456,789","$14,456,789","$13,457,789","$14,457,789"],explanation:"Sequential complex",detailNumbers:true},
-        {id:"i027",text:"Sales hit seventeen million six hundred fifty-four thousand three hundred twenty-one dollars",correct:"$17,654,321",choices:["$17,654,321","$16,654,321","$17,645,321","$16,645,321"],explanation:"Complex pattern",detailNumbers:true},
-        {id:"i028",text:"The fee is fifteen million four hundred thirty-two thousand one hundred nine dollars",correct:"$15,432,109",choices:["$15,432,109","$14,532,109","$15,423,109","$14,523,109"],explanation:"Irregular pattern",detailNumbers:true},
-        {id:"i029",text:"It totals twelve million nine hundred eighty-seven thousand six hundred fifty-four dollars",correct:"$12,987,654",choices:["$12,987,654","$13,987,654","$12,978,654","$13,978,654"],explanation:"Complex number",detailNumbers:true},
-        {id:"i030",text:"The contract is nineteen million seven hundred sixty-five thousand four hundred thirty-two dollars",correct:"$19,765,432",choices:["$19,765,432","$18,765,432","$19,756,432","$18,756,432"],explanation:"Detailed breakdown",detailNumbers:true}
-    ],
-    advanced: [
-        {id:"a001",text:"GDP increased to fifteen trillion dollars",correct:"$15T",choices:["$15T","$50T","$1.5T","$150T"],explanation:"'Fifteen trillion' - 1T = 1,000B",detailNumbers:false},
-        {id:"a002",text:"The national debt is approximately thirty point five trillion dollars",correct:"$30.5T",choices:["$30.5T","$13.5T","$35T","$3.5T"],explanation:"'Thirty point five trillion'",detailNumbers:false},
-        {id:"a003",text:"Infrastructure spending totaled one point five trillion dollars",correct:"$1.5T",choices:["$1.5T","$15T","$5T","$500B"],explanation:"'One point five trillion'",detailNumbers:false},
-        {id:"a004",text:"The bailout package was seven hundred fifty billion dollars",correct:"$750B",choices:["$750B","$7.5T","$75B","$175B"],explanation:"'Seven hundred fifty billion'",detailNumbers:false},
-        {id:"a005",text:"Market capitalization exceeded eighteen trillion dollars",correct:"$18T",choices:["$18T","$80T","$1.8T","$8T"],explanation:"'Eighteen' vs 'eighty'",detailNumbers:false},
-        {id:"a006",text:"The fund manages ninety-five billion dollars",correct:"$95B",choices:["$95B","$950B","$9.5B","$59B"],explanation:"'Ninety-five billion'",detailNumbers:false},
-        {id:"a007",text:"Global market reached one hundred twenty-three billion dollars",correct:"$123B",choices:["$123B","$133B","$23B","$233B"],explanation:"'One hundred twenty-three billion'",detailNumbers:false},
-        {id:"a008",text:"The merger was valued at fifty point seven billion dollars",correct:"$50.7B",choices:["$50.7B","$57B","$15.7B","$70.5B"],explanation:"'Fifty point seven billion'",detailNumbers:false},
-        {id:"a009",text:"Annual trade hit thirteen point two trillion dollars",correct:"$13.2T",choices:["$13.2T","$32T","$1.32T","$3.2T"],explanation:"'Thirteen point two trillion'",detailNumbers:false},
-        {id:"a010",text:"The stimulus was two point three trillion dollars",correct:"$2.3T",choices:["$2.3T","$3.2T","$230B","$23T"],explanation:"'Two point three trillion'",detailNumbers:false},
-        {id:"a011",text:"Revenue reached fourteen trillion dollars",correct:"$14T",choices:["$14T","$40T","$1.4T","$4T"],explanation:"'Fourteen' vs 'forty'",detailNumbers:false},
-        {id:"a012",text:"Assets total sixteen trillion dollars",correct:"$16T",choices:["$16T","$60T","$1.6T","$6T"],explanation:"'Sixteen' vs 'sixty'",detailNumbers:false},
-        {id:"a013",text:"The budget is twelve trillion dollars",correct:"$12T",choices:["$12T","$20T","$1.2T","$2T"],explanation:"'Twelve' vs 'twenty'",detailNumbers:false},
-        {id:"a014",text:"Market size hit seventeen trillion dollars",correct:"$17T",choices:["$17T","$70T","$1.7T","$7T"],explanation:"'Seventeen' vs 'seventy'",detailNumbers:false},
-        {id:"a015",text:"The contract is nineteen trillion dollars",correct:"$19T",choices:["$19T","$90T","$1.9T","$9T"],explanation:"'Nineteen' vs 'ninety'",detailNumbers:false},
-        {id:"a016",text:"Global market size reached one billion two hundred thirty-four million five hundred sixty-seven thousand eight hundred ninety dollars",correct:"$1,234,567,890",choices:["$1,234,567,890","$1,243,567,890","$1,234,576,890","$1,243,576,890"],explanation:"Extremely complex billion-level",detailNumbers:true},
-        {id:"a017",text:"The merger was valued at twelve billion three hundred forty-five million six hundred seventy-eight thousand nine hundred dollars",correct:"$12,345,678,900",choices:["$12,345,678,900","$13,345,678,900","$12,346,678,900","$13,346,678,900"],explanation:"Sequential billion-scale",detailNumbers:true},
-        {id:"a018",text:"Total assets reached one hundred twenty-three billion four hundred fifty-six million seven hundred eighty-nine thousand dollars",correct:"$123,456,789,000",choices:["$123,456,789,000","$132,456,789,000","$123,465,789,000","$132,465,789,000"],explanation:"Hundreds of billions",detailNumbers:true},
-        {id:"a019",text:"The fund manages ninety-eight billion seven hundred sixty-five million four hundred thirty-two thousand one hundred dollars",correct:"$98,765,432,100",choices:["$98,765,432,100","$89,765,432,100","$98,756,432,100","$89,756,432,100"],explanation:"Complex descending pattern",detailNumbers:true},
-        {id:"a020",text:"Annual revenue hit fifty-six billion seven hundred eighty-nine million twelve thousand three hundred forty-five dollars",correct:"$56,789,012,345",choices:["$56,789,012,345","$65,789,012,345","$56,798,012,345","$65,798,012,345"],explanation:"Irregular pattern",detailNumbers:true},
-        {id:"a021",text:"Assets total twenty-three billion four hundred fifty-six million seven hundred eighty-nine thousand twelve dollars",correct:"$23,456,789,012",choices:["$23,456,789,012","$32,456,789,012","$23,457,789,012","$32,457,789,012"],explanation:"Complex sequential",detailNumbers:true},
-        {id:"a022",text:"The investment is fourteen billion six hundred fifty-four million three hundred twenty-one thousand nine hundred eighty-seven dollars",correct:"$14,654,321,987",choices:["$14,654,321,987","$13,654,321,987","$14,645,321,987","$13,645,321,987"],explanation:"Descending complex",detailNumbers:true},
-        {id:"a023",text:"Market cap reached nineteen billion eight hundred seventy-six million five hundred forty-three thousand two hundred ten dollars",correct:"$19,876,543,210",choices:["$19,876,543,210","$18,976,543,210","$19,867,543,210","$18,967,543,210"],explanation:"Descending pattern",detailNumbers:true},
-        {id:"a024",text:"Revenue hit eleven billion two hundred thirty-four million five hundred sixty-seven thousand eight hundred ninety dollars",correct:"$11,234,567,890",choices:["$11,234,567,890","$12,234,567,890","$11,235,567,890","$12,235,567,890"],explanation:"Sequential complex",detailNumbers:true},
-        {id:"a025",text:"The budget is sixteen billion five hundred forty-three million two hundred ten thousand nine hundred eighty-seven dollars",correct:"$16,543,210,987",choices:["$16,543,210,987","$17,543,210,987","$16,542,210,987","$17,542,210,987"],explanation:"Complex pattern",detailNumbers:true},
-        {id:"a026",text:"Sales reached thirteen billion four hundred fifty-six million seven hundred eighty-nine thousand twelve dollars",correct:"$13,456,789,012",choices:["$13,456,789,012","$14,456,789,012","$13,457,789,012","$14,457,789,012"],explanation:"Sequential",detailNumbers:true},
-        {id:"a027",text:"Total value is seventeen billion six hundred fifty-four million three hundred twenty-one thousand nine hundred eighty-seven dollars",correct:"$17,654,321,987",choices:["$17,654,321,987","$16,654,321,987","$17,645,321,987","$16,645,321,987"],explanation:"Descending complex",detailNumbers:true},
-        {id:"a028",text:"The contract totals fifteen billion four hundred thirty-two million one hundred nine thousand eight hundred seventy-six dollars",correct:"$15,432,109,876",choices:["$15,432,109,876","$14,532,109,876","$15,423,109,876","$14,523,109,876"],explanation:"Irregular complex",detailNumbers:true},
-        {id:"a029",text:"Assets are twelve billion nine hundred eighty-seven million six hundred fifty-four thousand three hundred twenty-one dollars",correct:"$12,987,654,321",choices:["$12,987,654,321","$13,987,654,321","$12,978,654,321","$13,978,654,321"],explanation:"Descending",detailNumbers:true},
-        {id:"a030",text:"Market value hit nineteen billion seven hundred sixty-five million four hundred thirty-two thousand one hundred nine dollars",correct:"$19,765,432,109",choices:["$19,765,432,109","$18,765,432,109","$19,756,432,109","$18,756,432,109"],explanation:"Complex descending",detailNumbers:true}
+// Cookie操作用ヘルパー関数
+function setCookie(name, value, days) {
+    const maxAge = days * 24 * 60 * 60;
+    document.cookie = `${name}=${value}; max-age=${maxAge}; path=/`;
+}
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+}
+
+// Japanese conversion function
+function convertToJapanese(amountStr) {
+    // Remove $ sign
+    let str = amountStr.replace('$', '').trim();
+
+    // Handle abbreviations (M, B, T)
+    let multiplier = 1;
+    if (str.endsWith('T')) {
+        multiplier = 1000000000000;
+        str = str.slice(0, -1);
+    } else if (str.endsWith('B')) {
+        multiplier = 1000000000;
+        str = str.slice(0, -1);
+    } else if (str.endsWith('M')) {
+        multiplier = 1000000;
+        str = str.slice(0, -1);
+    }
+
+    // Convert to number
+    let num = parseFloat(str.replace(/,/g, '')) * multiplier;
+
+    // Convert to Japanese units
+    if (num >= 1000000000000) {
+        // 兆 (trillion)
+        let cho = Math.floor(num / 1000000000000);
+        let remainder = num % 1000000000000;
+        if (remainder >= 100000000) {
+            let oku = Math.floor(remainder / 100000000);
+            if (oku >= 1000) {
+                let sen = Math.floor(oku / 1000);
+                let hyaku = Math.floor((oku % 1000) / 100);
+                if (hyaku > 0) {
+                    return `${cho}兆${sen}千${hyaku}百億ドル`;
+                } else {
+                    return `${cho}兆${sen}千億ドル`;
+                }
+            } else {
+                return `${cho}兆${oku}億ドル`;
+            }
+        } else {
+            return `${cho}兆ドル`;
+        }
+    } else if (num >= 100000000) {
+        // 億 (hundred million)
+        let oku = Math.floor(num / 100000000);
+        let remainder = num % 100000000;
+        if (remainder >= 10000) {
+            let man = Math.floor(remainder / 10000);
+            if (man >= 1000) {
+                let sen = Math.floor(man / 1000);
+                let hyaku = Math.floor((man % 1000) / 100);
+                if (hyaku > 0) {
+                    return `${oku}億${sen}千${hyaku}百万ドル`;
+                } else {
+                    return `${oku}億${sen}千万ドル`;
+                }
+            } else {
+                return `${oku}億${man}万ドル`;
+            }
+        } else {
+            return `${oku}億ドル`;
+        }
+    } else if (num >= 10000) {
+        // 万 (ten thousand)
+        let man = Math.floor(num / 10000);
+        let remainder = num % 10000;
+        if (remainder >= 1000) {
+            let sen = Math.floor(remainder / 1000);
+            return `${man}万${sen}千ドル`;
+        } else {
+            return `${man}万ドル`;
+        }
+    } else {
+        // Less than 10,000
+        return `${num}ドル`;
+    }
+}
+
+// Beginner Level Variations Data
+// Range: thousand ~ hundred thousand (1,000 ~ 999,999)
+// Each question has 5-10 variations with familiarity levels 1-4
+
+const beginnerQuestions = [
+    // ===== Round Numbers (15 questions) =====
+
+    // Question 1: $15,000 (confusing pair with $50,000)
+    {
+        id: "b001",
+        number: 15000,
+        correct: "$15,000",
+        choices: ["$15,000", "$50,000", "$150,000", "$5,000"],
+        explanation: "In English, 'fifteen' and 'fifty' sound very similar",
+        detailNumbers: false,
+        variations: [
+            { text: "Fifteen thousand dollars", familiarity: 1 },
+            { text: "This costs fifteen thousand dollars", familiarity: 1 },
+            { text: "The price is fifteen thousand dollars", familiarity: 1 },
+            { text: "It's priced at fifteen thousand dollars", familiarity: 2 },
+            { text: "That'll be fifteen thousand dollars", familiarity: 2 },
+            { text: "It's valued at fifteen thousand dollars", familiarity: 3 },
+            { text: "The total comes to fifteen thousand dollars", familiarity: 3 },
+            { text: "They're asking fifteen thousand dollars for this", familiarity: 4 },
+            { text: "We're talking about fifteen thousand dollars here", familiarity: 4 }
+        ]
+    },
+
+    // Question 2: $50,000 (confusing pair with $15,000)
+    {
+        id: "b002",
+        number: 50000,
+        correct: "$50,000",
+        choices: ["$50,000", "$15,000", "$500,000", "$5,000"],
+        explanation: "'Fifty' vs 'fifteen' - listen for the 'f' sound at the start of 'fifty'",
+        detailNumbers: false,
+        variations: [
+            { text: "Fifty thousand dollars", familiarity: 1 },
+            { text: "This costs fifty thousand dollars", familiarity: 1 },
+            { text: "The price is fifty thousand dollars", familiarity: 1 },
+            { text: "It's priced at fifty thousand dollars", familiarity: 2 },
+            { text: "That'll be fifty thousand dollars", familiarity: 2 },
+            { text: "You'll pay fifty thousand dollars", familiarity: 2 },
+            { text: "The car costs fifty thousand dollars", familiarity: 3 },
+            { text: "Your total is fifty thousand dollars", familiarity: 3 },
+            { text: "They want fifty thousand dollars for it", familiarity: 4 }
+        ]
+    },
+
+    // Question 3: $13,000 (confusing pair with $30,000)
+    {
+        id: "b003",
+        number: 13000,
+        correct: "$13,000",
+        choices: ["$13,000", "$30,000", "$3,000", "$130,000"],
+        explanation: "'Thirteen' has the stress on 'TEEN', while 'thirty' stresses 'THIR'",
+        detailNumbers: false,
+        variations: [
+            { text: "Thirteen thousand dollars", familiarity: 1 },
+            { text: "This costs thirteen thousand dollars", familiarity: 1 },
+            { text: "The price is thirteen thousand dollars", familiarity: 1 },
+            { text: "It's priced at thirteen thousand dollars", familiarity: 2 },
+            { text: "That'll be thirteen thousand dollars", familiarity: 2 },
+            { text: "It comes to thirteen thousand dollars", familiarity: 3 },
+            { text: "The total is thirteen thousand dollars", familiarity: 3 },
+            { text: "They're asking thirteen thousand dollars", familiarity: 4 },
+            { text: "We're looking at thirteen thousand dollars here", familiarity: 4 }
+        ]
+    },
+
+    // Question 4: $30,000 (confusing pair with $13,000)
+    {
+        id: "b004",
+        number: 30000,
+        correct: "$30,000",
+        choices: ["$30,000", "$13,000", "$3,000", "$300,000"],
+        explanation: "'Thirty' vs 'thirteen' - 'thirty' has stress on the first syllable",
+        detailNumbers: false,
+        variations: [
+            { text: "Thirty thousand dollars", familiarity: 1 },
+            { text: "This costs thirty thousand dollars", familiarity: 1 },
+            { text: "The price is thirty thousand dollars", familiarity: 1 },
+            { text: "It's priced at thirty thousand dollars", familiarity: 2 },
+            { text: "That'll be thirty thousand dollars", familiarity: 2 },
+            { text: "You'll pay thirty thousand dollars", familiarity: 2 },
+            { text: "The car is thirty thousand dollars", familiarity: 3 },
+            { text: "It's valued at thirty thousand dollars", familiarity: 3 },
+            { text: "Officials say thirty thousand dollars", familiarity: 4 }
+        ]
+    },
+
+    // Question 5: $14,000 (confusing pair with $40,000)
+    {
+        id: "b005",
+        number: 14000,
+        correct: "$14,000",
+        choices: ["$14,000", "$40,000", "$4,000", "$140,000"],
+        explanation: "'Fourteen' vs 'forty' - similar sounding numbers",
+        detailNumbers: false,
+        variations: [
+            { text: "Fourteen thousand dollars", familiarity: 1 },
+            { text: "This costs fourteen thousand dollars", familiarity: 1 },
+            { text: "The price is fourteen thousand dollars", familiarity: 1 },
+            { text: "It's priced at fourteen thousand dollars", familiarity: 2 },
+            { text: "That'll be fourteen thousand dollars", familiarity: 2 },
+            { text: "The total comes to fourteen thousand dollars", familiarity: 3 },
+            { text: "It's valued at fourteen thousand dollars", familiarity: 3 },
+            { text: "They're asking fourteen thousand dollars for this", familiarity: 4 },
+            { text: "We're talking about fourteen thousand dollars", familiarity: 4 }
+        ]
+    },
+
+    // Question 6: $40,000 (confusing pair with $14,000)
+    {
+        id: "b006",
+        number: 40000,
+        correct: "$40,000",
+        choices: ["$40,000", "$14,000", "$4,000", "$400,000"],
+        explanation: "'Forty' vs 'fourteen' - listen carefully for the 'teen' ending",
+        detailNumbers: false,
+        variations: [
+            { text: "Forty thousand dollars", familiarity: 1 },
+            { text: "This costs forty thousand dollars", familiarity: 1 },
+            { text: "The price is forty thousand dollars", familiarity: 1 },
+            { text: "It's priced at forty thousand dollars", familiarity: 2 },
+            { text: "That'll be forty thousand dollars", familiarity: 2 },
+            { text: "You'll pay forty thousand dollars", familiarity: 2 },
+            { text: "The equipment costs forty thousand dollars", familiarity: 3 },
+            { text: "Your total is forty thousand dollars", familiarity: 3 },
+            { text: "They want forty thousand dollars for it", familiarity: 4 }
+        ]
+    },
+
+    // Question 7: $16,000 (confusing pair with $60,000)
+    {
+        id: "b007",
+        number: 16000,
+        correct: "$16,000",
+        choices: ["$16,000", "$60,000", "$6,000", "$160,000"],
+        explanation: "'Sixteen' vs 'sixty' - very similar pronunciation",
+        detailNumbers: false,
+        variations: [
+            { text: "Sixteen thousand dollars", familiarity: 1 },
+            { text: "This costs sixteen thousand dollars", familiarity: 1 },
+            { text: "The price is sixteen thousand dollars", familiarity: 1 },
+            { text: "It's priced at sixteen thousand dollars", familiarity: 2 },
+            { text: "That'll be sixteen thousand dollars", familiarity: 2 },
+            { text: "It comes to sixteen thousand dollars", familiarity: 3 },
+            { text: "The total is sixteen thousand dollars", familiarity: 3 },
+            { text: "They're asking sixteen thousand dollars", familiarity: 4 },
+            { text: "We're looking at sixteen thousand dollars", familiarity: 4 }
+        ]
+    },
+
+    // Question 8: $60,000 (confusing pair with $16,000)
+    {
+        id: "b008",
+        number: 60000,
+        correct: "$60,000",
+        choices: ["$60,000", "$16,000", "$6,000", "$600,000"],
+        explanation: "'Sixty' vs 'sixteen' - the 'teen' ending is key to differentiate",
+        detailNumbers: false,
+        variations: [
+            { text: "Sixty thousand dollars", familiarity: 1 },
+            { text: "This costs sixty thousand dollars", familiarity: 1 },
+            { text: "The price is sixty thousand dollars", familiarity: 1 },
+            { text: "It's priced at sixty thousand dollars", familiarity: 2 },
+            { text: "That'll be sixty thousand dollars", familiarity: 2 },
+            { text: "You'll pay sixty thousand dollars", familiarity: 2 },
+            { text: "The bike costs sixty thousand dollars", familiarity: 3 },
+            { text: "It's valued at sixty thousand dollars", familiarity: 3 },
+            { text: "Officials say sixty thousand dollars", familiarity: 4 }
+        ]
+    },
+
+    // Question 9: $17,000 (confusing pair with $70,000)
+    {
+        id: "b009",
+        number: 17000,
+        correct: "$17,000",
+        choices: ["$17,000", "$70,000", "$7,000", "$170,000"],
+        explanation: "'Seventeen' vs 'seventy' - tricky pair to distinguish",
+        detailNumbers: false,
+        variations: [
+            { text: "Seventeen thousand dollars", familiarity: 1 },
+            { text: "This costs seventeen thousand dollars", familiarity: 1 },
+            { text: "The price is seventeen thousand dollars", familiarity: 1 },
+            { text: "It's priced at seventeen thousand dollars", familiarity: 2 },
+            { text: "That'll be seventeen thousand dollars", familiarity: 2 },
+            { text: "The total comes to seventeen thousand dollars", familiarity: 3 },
+            { text: "It's valued at seventeen thousand dollars", familiarity: 3 },
+            { text: "They're asking seventeen thousand dollars", familiarity: 4 },
+            { text: "We're talking about seventeen thousand dollars", familiarity: 4 }
+        ]
+    },
+
+    // Question 10: $70,000 (confusing pair with $17,000)
+    {
+        id: "b010",
+        number: 70000,
+        correct: "$70,000",
+        choices: ["$70,000", "$17,000", "$7,000", "$700,000"],
+        explanation: "'Seventy' vs 'seventeen' - listen for stress patterns",
+        detailNumbers: false,
+        variations: [
+            { text: "Seventy thousand dollars", familiarity: 1 },
+            { text: "This costs seventy thousand dollars", familiarity: 1 },
+            { text: "The price is seventy thousand dollars", familiarity: 1 },
+            { text: "It's priced at seventy thousand dollars", familiarity: 2 },
+            { text: "That'll be seventy thousand dollars", familiarity: 2 },
+            { text: "You'll pay seventy thousand dollars", familiarity: 2 },
+            { text: "The machine costs seventy thousand dollars", familiarity: 3 },
+            { text: "Your total is seventy thousand dollars", familiarity: 3 },
+            { text: "They want seventy thousand dollars for it", familiarity: 4 }
+        ]
+    },
+
+    // Question 11: $18,000 (confusing pair with $80,000)
+    {
+        id: "b011",
+        number: 18000,
+        correct: "$18,000",
+        choices: ["$18,000", "$80,000", "$8,000", "$180,000"],
+        explanation: "'Eighteen' vs 'eighty' - common confusion",
+        detailNumbers: false,
+        variations: [
+            { text: "Eighteen thousand dollars", familiarity: 1 },
+            { text: "This costs eighteen thousand dollars", familiarity: 1 },
+            { text: "The price is eighteen thousand dollars", familiarity: 1 },
+            { text: "It's priced at eighteen thousand dollars", familiarity: 2 },
+            { text: "That'll be eighteen thousand dollars", familiarity: 2 },
+            { text: "It comes to eighteen thousand dollars", familiarity: 3 },
+            { text: "The total is eighteen thousand dollars", familiarity: 3 },
+            { text: "They're asking eighteen thousand dollars", familiarity: 4 },
+            { text: "We're looking at eighteen thousand dollars", familiarity: 4 }
+        ]
+    },
+
+    // Question 12: $80,000 (confusing pair with $18,000)
+    {
+        id: "b012",
+        number: 80000,
+        correct: "$80,000",
+        choices: ["$80,000", "$18,000", "$8,000", "$800,000"],
+        explanation: "'Eighty' vs 'eighteen' - pay attention to ending sounds",
+        detailNumbers: false,
+        variations: [
+            { text: "Eighty thousand dollars", familiarity: 1 },
+            { text: "This costs eighty thousand dollars", familiarity: 1 },
+            { text: "The price is eighty thousand dollars", familiarity: 1 },
+            { text: "It's priced at eighty thousand dollars", familiarity: 2 },
+            { text: "That'll be eighty thousand dollars", familiarity: 2 },
+            { text: "You'll pay eighty thousand dollars", familiarity: 2 },
+            { text: "The car costs eighty thousand dollars", familiarity: 3 },
+            { text: "It's valued at eighty thousand dollars", familiarity: 3 },
+            { text: "Officials say eighty thousand dollars", familiarity: 4 }
+        ]
+    },
+
+    // Question 13: $19,000 (confusing pair with $90,000)
+    {
+        id: "b013",
+        number: 19000,
+        correct: "$19,000",
+        choices: ["$19,000", "$90,000", "$9,000", "$190,000"],
+        explanation: "'Nineteen' vs 'ninety' - final confusing pair",
+        detailNumbers: false,
+        variations: [
+            { text: "Nineteen thousand dollars", familiarity: 1 },
+            { text: "This costs nineteen thousand dollars", familiarity: 1 },
+            { text: "The price is nineteen thousand dollars", familiarity: 1 },
+            { text: "It's priced at nineteen thousand dollars", familiarity: 2 },
+            { text: "That'll be nineteen thousand dollars", familiarity: 2 },
+            { text: "The total comes to nineteen thousand dollars", familiarity: 3 },
+            { text: "It's valued at nineteen thousand dollars", familiarity: 3 },
+            { text: "They're asking nineteen thousand dollars", familiarity: 4 },
+            { text: "We're talking about nineteen thousand dollars", familiarity: 4 }
+        ]
+    },
+
+    // Question 14: $90,000 (confusing pair with $19,000)
+    {
+        id: "b014",
+        number: 90000,
+        correct: "$90,000",
+        choices: ["$90,000", "$19,000", "$9,000", "$900,000"],
+        explanation: "'Ninety' vs 'nineteen' - stress and rhythm matter",
+        detailNumbers: false,
+        variations: [
+            { text: "Ninety thousand dollars", familiarity: 1 },
+            { text: "This costs ninety thousand dollars", familiarity: 1 },
+            { text: "The price is ninety thousand dollars", familiarity: 1 },
+            { text: "It's priced at ninety thousand dollars", familiarity: 2 },
+            { text: "That'll be ninety thousand dollars", familiarity: 2 },
+            { text: "You'll pay ninety thousand dollars", familiarity: 2 },
+            { text: "The equipment costs ninety thousand dollars", familiarity: 3 },
+            { text: "Your total is ninety thousand dollars", familiarity: 3 },
+            { text: "They want ninety thousand dollars for it", familiarity: 4 }
+        ]
+    },
+
+    // Question 15: $100,000 (milestone number)
+    {
+        id: "b015",
+        number: 100000,
+        correct: "$100,000",
+        choices: ["$100,000", "$10,000", "$1,000,000", "$1,000"],
+        explanation: "'One hundred thousand' - important milestone number",
+        detailNumbers: false,
+        variations: [
+            { text: "One hundred thousand dollars", familiarity: 1 },
+            { text: "This costs one hundred thousand dollars", familiarity: 1 },
+            { text: "The price is one hundred thousand dollars", familiarity: 1 },
+            { text: "It's priced at one hundred thousand dollars", familiarity: 2 },
+            { text: "That'll be one hundred thousand dollars", familiarity: 2 },
+            { text: "The property is valued at one hundred thousand dollars", familiarity: 2 },
+            { text: "It comes to one hundred thousand dollars", familiarity: 3 },
+            { text: "The total is one hundred thousand dollars", familiarity: 3 },
+            { text: "They're asking one hundred thousand dollars", familiarity: 4 },
+            { text: "We're looking at one hundred thousand dollars here", familiarity: 4 }
+        ]
+    },
+
+    // ===== Detailed Numbers (15 questions) =====
+
+    // Question 16: $12,340
+    {
+        id: "b016",
+        number: 12340,
+        correct: "$12,340",
+        choices: ["$12,340", "$13,240", "$12,430", "$13,430"],
+        explanation: "Complex: 'twelve thousand three hundred forty'",
+        detailNumbers: true,
+        variations: [
+            { text: "Twelve thousand three hundred forty dollars", familiarity: 1 },
+            { text: "This costs twelve thousand three hundred forty dollars", familiarity: 1 },
+            { text: "The price is twelve thousand three hundred forty dollars", familiarity: 1 },
+            { text: "It's priced at twelve thousand three hundred forty dollars", familiarity: 2 },
+            { text: "That'll be twelve thousand three hundred forty dollars", familiarity: 2 },
+            { text: "The total comes to twelve thousand three hundred forty dollars", familiarity: 3 },
+            { text: "It's valued at twelve thousand three hundred forty dollars", familiarity: 3 },
+            { text: "They're asking twelve thousand three hundred forty dollars", familiarity: 4 }
+        ]
+    },
+
+    // Question 17: $15,678
+    {
+        id: "b017",
+        number: 15678,
+        correct: "$15,678",
+        choices: ["$15,678", "$15,768", "$16,678", "$16,768"],
+        explanation: "'Fifteen thousand six hundred seventy-eight'",
+        detailNumbers: true,
+        variations: [
+            { text: "Fifteen thousand six hundred seventy-eight dollars", familiarity: 1 },
+            { text: "This costs fifteen thousand six hundred seventy-eight dollars", familiarity: 1 },
+            { text: "The price is fifteen thousand six hundred seventy-eight dollars", familiarity: 1 },
+            { text: "It's priced at fifteen thousand six hundred seventy-eight dollars", familiarity: 2 },
+            { text: "That'll be fifteen thousand six hundred seventy-eight dollars", familiarity: 2 },
+            { text: "You'll pay fifteen thousand six hundred seventy-eight dollars", familiarity: 2 },
+            { text: "The car costs fifteen thousand six hundred seventy-eight dollars", familiarity: 3 },
+            { text: "Your total is fifteen thousand six hundred seventy-eight dollars", familiarity: 3 },
+            { text: "They want fifteen thousand six hundred seventy-eight dollars", familiarity: 4 }
+        ]
+    },
+
+    // Question 18: $23,456
+    {
+        id: "b018",
+        number: 23456,
+        correct: "$23,456",
+        choices: ["$23,456", "$32,456", "$23,546", "$32,546"],
+        explanation: "Sequential pattern: 2-3-4-5-6",
+        detailNumbers: true,
+        variations: [
+            { text: "Twenty-three thousand four hundred fifty-six dollars", familiarity: 1 },
+            { text: "This costs twenty-three thousand four hundred fifty-six dollars", familiarity: 1 },
+            { text: "The price is twenty-three thousand four hundred fifty-six dollars", familiarity: 1 },
+            { text: "It's priced at twenty-three thousand four hundred fifty-six dollars", familiarity: 2 },
+            { text: "That'll be twenty-three thousand four hundred fifty-six dollars", familiarity: 2 },
+            { text: "It comes to twenty-three thousand four hundred fifty-six dollars", familiarity: 3 },
+            { text: "The total is twenty-three thousand four hundred fifty-six dollars", familiarity: 3 },
+            { text: "They're asking twenty-three thousand four hundred fifty-six dollars", familiarity: 4 },
+            { text: "We're looking at twenty-three thousand four hundred fifty-six dollars", familiarity: 4 }
+        ]
+    },
+
+    // Question 19: $34,567
+    {
+        id: "b019",
+        number: 34567,
+        correct: "$34,567",
+        choices: ["$34,567", "$43,567", "$34,657", "$43,657"],
+        explanation: "Sequential pattern: 3-4-5-6-7",
+        detailNumbers: true,
+        variations: [
+            { text: "Thirty-four thousand five hundred sixty-seven dollars", familiarity: 1 },
+            { text: "This costs thirty-four thousand five hundred sixty-seven dollars", familiarity: 1 },
+            { text: "The price is thirty-four thousand five hundred sixty-seven dollars", familiarity: 1 },
+            { text: "It's priced at thirty-four thousand five hundred sixty-seven dollars", familiarity: 2 },
+            { text: "That'll be thirty-four thousand five hundred sixty-seven dollars", familiarity: 2 },
+            { text: "You'll pay thirty-four thousand five hundred sixty-seven dollars", familiarity: 2 },
+            { text: "The equipment costs thirty-four thousand five hundred sixty-seven dollars", familiarity: 3 },
+            { text: "It's valued at thirty-four thousand five hundred sixty-seven dollars", familiarity: 3 },
+            { text: "They want thirty-four thousand five hundred sixty-seven dollars", familiarity: 4 }
+        ]
+    },
+
+    // Question 20: $45,678
+    {
+        id: "b020",
+        number: 45678,
+        correct: "$45,678",
+        choices: ["$45,678", "$54,678", "$45,768", "$54,768"],
+        explanation: "Sequential pattern: 4-5-6-7-8",
+        detailNumbers: true,
+        variations: [
+            { text: "Forty-five thousand six hundred seventy-eight dollars", familiarity: 1 },
+            { text: "This costs forty-five thousand six hundred seventy-eight dollars", familiarity: 1 },
+            { text: "The price is forty-five thousand six hundred seventy-eight dollars", familiarity: 1 },
+            { text: "It's priced at forty-five thousand six hundred seventy-eight dollars", familiarity: 2 },
+            { text: "That'll be forty-five thousand six hundred seventy-eight dollars", familiarity: 2 },
+            { text: "The total comes to forty-five thousand six hundred seventy-eight dollars", familiarity: 3 },
+            { text: "It's valued at forty-five thousand six hundred seventy-eight dollars", familiarity: 3 },
+            { text: "They're asking forty-five thousand six hundred seventy-eight dollars", familiarity: 4 },
+            { text: "We're talking about forty-five thousand six hundred seventy-eight dollars", familiarity: 4 }
+        ]
+    },
+
+    // Question 21: $56,789
+    {
+        id: "b021",
+        number: 56789,
+        correct: "$56,789",
+        choices: ["$56,789", "$65,789", "$56,879", "$65,879"],
+        explanation: "Sequential pattern: 5-6-7-8-9",
+        detailNumbers: true,
+        variations: [
+            { text: "Fifty-six thousand seven hundred eighty-nine dollars", familiarity: 1 },
+            { text: "This costs fifty-six thousand seven hundred eighty-nine dollars", familiarity: 1 },
+            { text: "The price is fifty-six thousand seven hundred eighty-nine dollars", familiarity: 1 },
+            { text: "It's priced at fifty-six thousand seven hundred eighty-nine dollars", familiarity: 2 },
+            { text: "That'll be fifty-six thousand seven hundred eighty-nine dollars", familiarity: 2 },
+            { text: "You'll pay fifty-six thousand seven hundred eighty-nine dollars", familiarity: 2 },
+            { text: "The bike costs fifty-six thousand seven hundred eighty-nine dollars", familiarity: 3 },
+            { text: "Your total is fifty-six thousand seven hundred eighty-nine dollars", familiarity: 3 },
+            { text: "They want fifty-six thousand seven hundred eighty-nine dollars", familiarity: 4 }
+        ]
+    },
+
+    // Question 22: $67,890
+    {
+        id: "b022",
+        number: 67890,
+        correct: "$67,890",
+        choices: ["$67,890", "$76,890", "$67,980", "$76,980"],
+        explanation: "Sequential pattern: 6-7-8-9-0",
+        detailNumbers: true,
+        variations: [
+            { text: "Sixty-seven thousand eight hundred ninety dollars", familiarity: 1 },
+            { text: "This costs sixty-seven thousand eight hundred ninety dollars", familiarity: 1 },
+            { text: "The price is sixty-seven thousand eight hundred ninety dollars", familiarity: 1 },
+            { text: "It's priced at sixty-seven thousand eight hundred ninety dollars", familiarity: 2 },
+            { text: "That'll be sixty-seven thousand eight hundred ninety dollars", familiarity: 2 },
+            { text: "It comes to sixty-seven thousand eight hundred ninety dollars", familiarity: 3 },
+            { text: "The total is sixty-seven thousand eight hundred ninety dollars", familiarity: 3 },
+            { text: "They're asking sixty-seven thousand eight hundred ninety dollars", familiarity: 4 },
+            { text: "We're looking at sixty-seven thousand eight hundred ninety dollars", familiarity: 4 }
+        ]
+    },
+
+    // Question 23: $78,901
+    {
+        id: "b023",
+        number: 78901,
+        correct: "$78,901",
+        choices: ["$78,901", "$87,901", "$78,910", "$87,910"],
+        explanation: "Sequential with wraparound: 7-8-9-0-1",
+        detailNumbers: true,
+        variations: [
+            { text: "Seventy-eight thousand nine hundred one dollars", familiarity: 1 },
+            { text: "This costs seventy-eight thousand nine hundred one dollars", familiarity: 1 },
+            { text: "The price is seventy-eight thousand nine hundred one dollars", familiarity: 1 },
+            { text: "It's priced at seventy-eight thousand nine hundred one dollars", familiarity: 2 },
+            { text: "That'll be seventy-eight thousand nine hundred one dollars", familiarity: 2 },
+            { text: "You'll pay seventy-eight thousand nine hundred one dollars", familiarity: 2 },
+            { text: "The machine costs seventy-eight thousand nine hundred one dollars", familiarity: 3 },
+            { text: "It's valued at seventy-eight thousand nine hundred one dollars", familiarity: 3 },
+            { text: "They want seventy-eight thousand nine hundred one dollars", familiarity: 4 }
+        ]
+    },
+
+    // Question 24: $89,012
+    {
+        id: "b024",
+        number: 89012,
+        correct: "$89,012",
+        choices: ["$89,012", "$98,012", "$89,021", "$98,021"],
+        explanation: "Sequential: 8-9-0-1-2",
+        detailNumbers: true,
+        variations: [
+            { text: "Eighty-nine thousand twelve dollars", familiarity: 1 },
+            { text: "This costs eighty-nine thousand twelve dollars", familiarity: 1 },
+            { text: "The price is eighty-nine thousand twelve dollars", familiarity: 1 },
+            { text: "It's priced at eighty-nine thousand twelve dollars", familiarity: 2 },
+            { text: "That'll be eighty-nine thousand twelve dollars", familiarity: 2 },
+            { text: "The total comes to eighty-nine thousand twelve dollars", familiarity: 3 },
+            { text: "It's valued at eighty-nine thousand twelve dollars", familiarity: 3 },
+            { text: "They're asking eighty-nine thousand twelve dollars", familiarity: 4 },
+            { text: "We're talking about eighty-nine thousand twelve dollars", familiarity: 4 }
+        ]
+    },
+
+    // Question 25: $13,579 (odd digits)
+    {
+        id: "b025",
+        number: 13579,
+        correct: "$13,579",
+        choices: ["$13,579", "$31,579", "$13,597", "$31,597"],
+        explanation: "Odd digits pattern: 1-3-5-7-9",
+        detailNumbers: true,
+        variations: [
+            { text: "Thirteen thousand five hundred seventy-nine dollars", familiarity: 1 },
+            { text: "This costs thirteen thousand five hundred seventy-nine dollars", familiarity: 1 },
+            { text: "The price is thirteen thousand five hundred seventy-nine dollars", familiarity: 1 },
+            { text: "It's priced at thirteen thousand five hundred seventy-nine dollars", familiarity: 2 },
+            { text: "That'll be thirteen thousand five hundred seventy-nine dollars", familiarity: 2 },
+            { text: "You'll pay thirteen thousand five hundred seventy-nine dollars", familiarity: 2 },
+            { text: "The car costs thirteen thousand five hundred seventy-nine dollars", familiarity: 3 },
+            { text: "Your total is thirteen thousand five hundred seventy-nine dollars", familiarity: 3 },
+            { text: "They want thirteen thousand five hundred seventy-nine dollars", familiarity: 4 }
+        ]
+    },
+
+    // Question 26: $24,680 (even digits)
+    {
+        id: "b026",
+        number: 24680,
+        correct: "$24,680",
+        choices: ["$24,680", "$42,680", "$24,860", "$42,860"],
+        explanation: "Even digits pattern: 2-4-6-8-0",
+        detailNumbers: true,
+        variations: [
+            { text: "Twenty-four thousand six hundred eighty dollars", familiarity: 1 },
+            { text: "This costs twenty-four thousand six hundred eighty dollars", familiarity: 1 },
+            { text: "The price is twenty-four thousand six hundred eighty dollars", familiarity: 1 },
+            { text: "It's priced at twenty-four thousand six hundred eighty dollars", familiarity: 2 },
+            { text: "That'll be twenty-four thousand six hundred eighty dollars", familiarity: 2 },
+            { text: "It comes to twenty-four thousand six hundred eighty dollars", familiarity: 3 },
+            { text: "The total is twenty-four thousand six hundred eighty dollars", familiarity: 3 },
+            { text: "They're asking twenty-four thousand six hundred eighty dollars", familiarity: 4 },
+            { text: "We're looking at twenty-four thousand six hundred eighty dollars", familiarity: 4 }
+        ]
+    },
+
+    // Question 27: $51,234
+    {
+        id: "b027",
+        number: 51234,
+        correct: "$51,234",
+        choices: ["$51,234", "$15,234", "$51,324", "$15,324"],
+        explanation: "Confusing 'fifty-one' with 'fifteen' at the start",
+        detailNumbers: true,
+        variations: [
+            { text: "Fifty-one thousand two hundred thirty-four dollars", familiarity: 1 },
+            { text: "This costs fifty-one thousand two hundred thirty-four dollars", familiarity: 1 },
+            { text: "The price is fifty-one thousand two hundred thirty-four dollars", familiarity: 1 },
+            { text: "It's priced at fifty-one thousand two hundred thirty-four dollars", familiarity: 2 },
+            { text: "That'll be fifty-one thousand two hundred thirty-four dollars", familiarity: 2 },
+            { text: "You'll pay fifty-one thousand two hundred thirty-four dollars", familiarity: 2 },
+            { text: "The equipment costs fifty-one thousand two hundred thirty-four dollars", familiarity: 3 },
+            { text: "It's valued at fifty-one thousand two hundred thirty-four dollars", familiarity: 3 },
+            { text: "They want fifty-one thousand two hundred thirty-four dollars", familiarity: 4 }
+        ]
+    },
+
+    // Question 28: $71,456
+    {
+        id: "b028",
+        number: 71456,
+        correct: "$71,456",
+        choices: ["$71,456", "$17,456", "$71,546", "$17,546"],
+        explanation: "Confusing 'seventy-one' with 'seventeen'",
+        detailNumbers: true,
+        variations: [
+            { text: "Seventy-one thousand four hundred fifty-six dollars", familiarity: 1 },
+            { text: "This costs seventy-one thousand four hundred fifty-six dollars", familiarity: 1 },
+            { text: "The price is seventy-one thousand four hundred fifty-six dollars", familiarity: 1 },
+            { text: "It's priced at seventy-one thousand four hundred fifty-six dollars", familiarity: 2 },
+            { text: "That'll be seventy-one thousand four hundred fifty-six dollars", familiarity: 2 },
+            { text: "The total comes to seventy-one thousand four hundred fifty-six dollars", familiarity: 3 },
+            { text: "It's valued at seventy-one thousand four hundred fifty-six dollars", familiarity: 3 },
+            { text: "They're asking seventy-one thousand four hundred fifty-six dollars", familiarity: 4 },
+            { text: "We're talking about seventy-one thousand four hundred fifty-six dollars", familiarity: 4 }
+        ]
+    },
+
+    // Question 29: $81,567
+    {
+        id: "b029",
+        number: 81567,
+        correct: "$81,567",
+        choices: ["$81,567", "$18,567", "$81,657", "$18,657"],
+        explanation: "Confusing 'eighty-one' with 'eighteen'",
+        detailNumbers: true,
+        variations: [
+            { text: "Eighty-one thousand five hundred sixty-seven dollars", familiarity: 1 },
+            { text: "This costs eighty-one thousand five hundred sixty-seven dollars", familiarity: 1 },
+            { text: "The price is eighty-one thousand five hundred sixty-seven dollars", familiarity: 1 },
+            { text: "It's priced at eighty-one thousand five hundred sixty-seven dollars", familiarity: 2 },
+            { text: "That'll be eighty-one thousand five hundred sixty-seven dollars", familiarity: 2 },
+            { text: "You'll pay eighty-one thousand five hundred sixty-seven dollars", familiarity: 2 },
+            { text: "The bike costs eighty-one thousand five hundred sixty-seven dollars", familiarity: 3 },
+            { text: "Your total is eighty-one thousand five hundred sixty-seven dollars", familiarity: 3 },
+            { text: "They want eighty-one thousand five hundred sixty-seven dollars", familiarity: 4 }
+        ]
+    },
+
+    // Question 30: $91,678
+    {
+        id: "b030",
+        number: 91678,
+        correct: "$91,678",
+        choices: ["$91,678", "$19,678", "$91,768", "$19,768"],
+        explanation: "Confusing 'ninety-one' with 'nineteen'",
+        detailNumbers: true,
+        variations: [
+            { text: "Ninety-one thousand six hundred seventy-eight dollars", familiarity: 1 },
+            { text: "This costs ninety-one thousand six hundred seventy-eight dollars", familiarity: 1 },
+            { text: "The price is ninety-one thousand six hundred seventy-eight dollars", familiarity: 1 },
+            { text: "It's priced at ninety-one thousand six hundred seventy-eight dollars", familiarity: 2 },
+            { text: "That'll be ninety-one thousand six hundred seventy-eight dollars", familiarity: 2 },
+            { text: "It comes to ninety-one thousand six hundred seventy-eight dollars", familiarity: 3 },
+            { text: "The total is ninety-one thousand six hundred seventy-eight dollars", familiarity: 3 },
+            { text: "They're asking ninety-one thousand six hundred seventy-eight dollars", familiarity: 4 },
+            { text: "We're looking at ninety-one thousand six hundred seventy-eight dollars", familiarity: 4 }
+        ]
+    }
+];
+
+// Export for use in other modules
+// if (typeof module !== 'undefined' && module.exports) {
+    // module.exports = beginnerQuestions;
+// }
+
+
+// Intermediate Level Variations Data
+// Range: hundred thousand ~ million (100,000 ~ 99,999,999)
+// Each question has 5-10 variations with familiarity levels 1-4
+
+const variations_intermediate = [
+    // ===== Round Numbers (15 questions) =====
+
+    // Question 1: $150,000 (confusing pair with $500,000)
+    {
+        number: 150000,
+        correct: "$150,000",
+        detailNumbers: false,
+        variations: [
+            { text: "One hundred fifty thousand dollars", familiarity: 1 },
+            { text: "This costs one hundred fifty thousand dollars", familiarity: 1 },
+            { text: "The price is one hundred fifty thousand dollars", familiarity: 1 },
+            { text: "It's priced at one hundred fifty thousand dollars", familiarity: 2 },
+            { text: "That'll be one hundred fifty thousand dollars", familiarity: 2 },
+            { text: "The property is valued at one hundred fifty thousand dollars", familiarity: 2 },
+            { text: "Revenue reached one hundred fifty thousand dollars", familiarity: 3 },
+            { text: "Sales hit one hundred fifty thousand dollars", familiarity: 3 },
+            { text: "They're looking at one hundred fifty thousand dollars", familiarity: 4 },
+            { text: "We're talking about roughly one hundred fifty thousand dollars", familiarity: 4 }
+        ],
+        choices: ["$150,000", "$500,000", "$15,000", "$1,500,000"],
+        explanation: "'One hundred fifty thousand' - listen for 'fifty' not 'five hundred'"
+    },
+
+    // Question 2: $500,000 (confusing pair with $150,000)
+    {
+        number: 500000,
+        correct: "$500,000",
+        detailNumbers: false,
+        variations: [
+            { text: "Five hundred thousand dollars", familiarity: 1 },
+            { text: "This property costs five hundred thousand dollars", familiarity: 1 },
+            { text: "The asking price is five hundred thousand dollars", familiarity: 1 },
+            { text: "It's on the market for five hundred thousand dollars", familiarity: 2 },
+            { text: "That'll run you five hundred thousand dollars", familiarity: 2 },
+            { text: "Profits reached five hundred thousand dollars", familiarity: 3 },
+            { text: "The total comes to five hundred thousand dollars", familiarity: 3 },
+            { text: "Officials estimate five hundred thousand dollars", familiarity: 4 }
+        ],
+        choices: ["$500,000", "$150,000", "$50,000", "$5,000,000"],
+        explanation: "'Five hundred thousand' - 'five hundred' not 'fifty'"
+    },
+
+    // Question 3: $1,500,000 (confusing pair with $15,000,000)
+    {
+        number: 1500000,
+        correct: "$1,500,000",
+        detailNumbers: false,
+        variations: [
+            { text: "One point five million dollars", familiarity: 1 },
+            { text: "This costs one point five million dollars", familiarity: 1 },
+            { text: "The price is one point five million dollars", familiarity: 1 },
+            { text: "It's priced at one point five million dollars", familiarity: 2 },
+            { text: "The asking price is one point five million dollars", familiarity: 2 },
+            { text: "Revenue was one point five million dollars", familiarity: 3 },
+            { text: "They earned one point five million dollars", familiarity: 3 },
+            { text: "Reports indicate one point five million dollars", familiarity: 4 },
+            { text: "We're talking about roughly one point five million dollars", familiarity: 4 }
+        ],
+        choices: ["$1,500,000", "$15,000,000", "$150,000", "$5,000,000"],
+        explanation: "'One point five million' - not 'fifteen million'"
+    },
+
+    // Question 4: $15,000,000 (confusing pair with $1,500,000)
+    {
+        number: 15000000,
+        correct: "$15,000,000",
+        detailNumbers: false,
+        variations: [
+            { text: "Fifteen million dollars", familiarity: 1 },
+            { text: "This facility costs fifteen million dollars", familiarity: 1 },
+            { text: "The contract is fifteen million dollars", familiarity: 1 },
+            { text: "It's valued at fifteen million dollars", familiarity: 2 },
+            { text: "That'll be fifteen million dollars", familiarity: 2 },
+            { text: "Revenue reached fifteen million dollars", familiarity: 3 },
+            { text: "Sales hit fifteen million dollars", familiarity: 3 },
+            { text: "The damage totaled fifteen million dollars", familiarity: 4 }
+        ],
+        choices: ["$15,000,000", "$1,500,000", "$50,000,000", "$5,000,000"],
+        explanation: "'Fifteen million' - not 'one point five million'"
+    },
+
+    // Question 5: $200,000 (confusing pair with $2,000,000)
+    {
+        number: 200000,
+        correct: "$200,000",
+        detailNumbers: false,
+        variations: [
+            { text: "Two hundred thousand dollars", familiarity: 1 },
+            { text: "This costs two hundred thousand dollars", familiarity: 1 },
+            { text: "The price is two hundred thousand dollars", familiarity: 1 },
+            { text: "It's priced at two hundred thousand dollars", familiarity: 2 },
+            { text: "The property is valued at two hundred thousand dollars", familiarity: 2 },
+            { text: "Profits reached two hundred thousand dollars", familiarity: 3 },
+            { text: "The total comes to two hundred thousand dollars", familiarity: 3 },
+            { text: "They're looking at two hundred thousand dollars", familiarity: 4 },
+            { text: "We're talking about roughly two hundred thousand dollars", familiarity: 4 }
+        ],
+        choices: ["$200,000", "$2,000,000", "$20,000", "$20,000,000"],
+        explanation: "'Two hundred thousand' - listen for 'thousand' not 'million'"
+    },
+
+    // Question 6: $2,000,000 (confusing pair with $200,000)
+    {
+        number: 2000000,
+        correct: "$2,000,000",
+        detailNumbers: false,
+        variations: [
+            { text: "Two million dollars", familiarity: 1 },
+            { text: "This property costs two million dollars", familiarity: 1 },
+            { text: "The asking price is two million dollars", familiarity: 1 },
+            { text: "It's on the market for two million dollars", familiarity: 2 },
+            { text: "That'll run you two million dollars", familiarity: 2 },
+            { text: "Revenue was two million dollars", familiarity: 3 },
+            { text: "They earned two million dollars", familiarity: 3 },
+            { text: "Officials estimate two million dollars", familiarity: 4 }
+        ],
+        choices: ["$2,000,000", "$200,000", "$20,000,000", "$20,000"],
+        explanation: "'Two million' - listen for 'million' not 'thousand'"
+    },
+
+    // Question 7: $300,000
+    {
+        number: 300000,
+        correct: "$300,000",
+        detailNumbers: false,
+        variations: [
+            { text: "Three hundred thousand dollars", familiarity: 1 },
+            { text: "This house costs three hundred thousand dollars", familiarity: 1 },
+            { text: "The budget is three hundred thousand dollars", familiarity: 1 },
+            { text: "It's priced at three hundred thousand dollars", familiarity: 2 },
+            { text: "The asking price is three hundred thousand dollars", familiarity: 2 },
+            { text: "Sales hit three hundred thousand dollars", familiarity: 3 },
+            { text: "The total comes to three hundred thousand dollars", familiarity: 3 },
+            { text: "Reports indicate three hundred thousand dollars", familiarity: 4 }
+        ],
+        choices: ["$300,000", "$3,000,000", "$30,000", "$30,000,000"],
+        explanation: "'Three hundred thousand'"
+    },
+
+    // Question 8: $750,000
+    {
+        number: 750000,
+        correct: "$750,000",
+        detailNumbers: false,
+        variations: [
+            { text: "Seven hundred fifty thousand dollars", familiarity: 1 },
+            { text: "This investment is seven hundred fifty thousand dollars", familiarity: 1 },
+            { text: "The price is seven hundred fifty thousand dollars", familiarity: 1 },
+            { text: "It's valued at seven hundred fifty thousand dollars", familiarity: 2 },
+            { text: "That'll be seven hundred fifty thousand dollars", familiarity: 2 },
+            { text: "Revenue reached seven hundred fifty thousand dollars", familiarity: 3 },
+            { text: "Profits reached seven hundred fifty thousand dollars", familiarity: 3 },
+            { text: "They're looking at seven hundred fifty thousand dollars", familiarity: 4 }
+        ],
+        choices: ["$750,000", "$7,500,000", "$75,000", "$575,000"],
+        explanation: "'Seven hundred fifty thousand'"
+    },
+
+    // Question 9: $1,000,000
+    {
+        number: 1000000,
+        correct: "$1,000,000",
+        detailNumbers: false,
+        variations: [
+            { text: "One million dollars", familiarity: 1 },
+            { text: "This costs one million dollars", familiarity: 1 },
+            { text: "The price is one million dollars", familiarity: 1 },
+            { text: "It's priced at one million dollars", familiarity: 2 },
+            { text: "The property is valued at one million dollars", familiarity: 2 },
+            { text: "Revenue was one million dollars", familiarity: 3 },
+            { text: "Sales hit one million dollars", familiarity: 3 },
+            { text: "The damage totaled one million dollars", familiarity: 4 },
+            { text: "We're talking about roughly one million dollars", familiarity: 4 }
+        ],
+        choices: ["$1,000,000", "$10,000,000", "$100,000", "$1,000"],
+        explanation: "'One million'"
+    },
+
+    // Question 10: $5,000,000
+    {
+        number: 5000000,
+        correct: "$5,000,000",
+        detailNumbers: false,
+        variations: [
+            { text: "Five million dollars", familiarity: 1 },
+            { text: "This facility costs five million dollars", familiarity: 1 },
+            { text: "The contract is five million dollars", familiarity: 1 },
+            { text: "It's valued at five million dollars", familiarity: 2 },
+            { text: "The asking price is five million dollars", familiarity: 2 },
+            { text: "They earned five million dollars", familiarity: 3 },
+            { text: "Profits reached five million dollars", familiarity: 3 },
+            { text: "Officials estimate five million dollars", familiarity: 4 }
+        ],
+        choices: ["$5,000,000", "$50,000,000", "$500,000", "$15,000,000"],
+        explanation: "'Five million'"
+    },
+
+    // Question 11: $10,000,000
+    {
+        number: 10000000,
+        correct: "$10,000,000",
+        detailNumbers: false,
+        variations: [
+            { text: "Ten million dollars", familiarity: 1 },
+            { text: "This project costs ten million dollars", familiarity: 1 },
+            { text: "The budget is ten million dollars", familiarity: 1 },
+            { text: "It's priced at ten million dollars", familiarity: 2 },
+            { text: "That'll run you ten million dollars", familiarity: 2 },
+            { text: "Revenue reached ten million dollars", familiarity: 3 },
+            { text: "Sales hit ten million dollars", familiarity: 3 },
+            { text: "The total comes to ten million dollars", familiarity: 4 }
+        ],
+        choices: ["$10,000,000", "$1,000,000", "$100,000,000", "$10,000"],
+        explanation: "'Ten million'"
+    },
+
+    // Question 12: $20,000,000
+    {
+        number: 20000000,
+        correct: "$20,000,000",
+        detailNumbers: false,
+        variations: [
+            { text: "Twenty million dollars", familiarity: 1 },
+            { text: "This facility costs twenty million dollars", familiarity: 1 },
+            { text: "The contract is twenty million dollars", familiarity: 1 },
+            { text: "It's valued at twenty million dollars", familiarity: 2 },
+            { text: "The property is valued at twenty million dollars", familiarity: 2 },
+            { text: "Revenue was twenty million dollars", familiarity: 3 },
+            { text: "They earned twenty million dollars", familiarity: 3 },
+            { text: "Reports indicate twenty million dollars", familiarity: 4 },
+            { text: "We're talking about roughly twenty million dollars", familiarity: 4 }
+        ],
+        choices: ["$20,000,000", "$2,000,000", "$200,000,000", "$12,000,000"],
+        explanation: "'Twenty million' - not 'twelve'"
+    },
+
+    // Question 13: $50,000,000
+    {
+        number: 50000000,
+        correct: "$50,000,000",
+        detailNumbers: false,
+        variations: [
+            { text: "Fifty million dollars", familiarity: 1 },
+            { text: "This costs fifty million dollars", familiarity: 1 },
+            { text: "The price is fifty million dollars", familiarity: 1 },
+            { text: "It's priced at fifty million dollars", familiarity: 2 },
+            { text: "The asking price is fifty million dollars", familiarity: 2 },
+            { text: "Revenue reached fifty million dollars", familiarity: 3 },
+            { text: "Sales hit fifty million dollars", familiarity: 3 },
+            { text: "The damage totaled fifty million dollars", familiarity: 4 }
+        ],
+        choices: ["$50,000,000", "$15,000,000", "$5,000,000", "$500,000,000"],
+        explanation: "'Fifty million' - not 'fifteen'"
+    },
+
+    // Question 14: $75,000,000
+    {
+        number: 75000000,
+        correct: "$75,000,000",
+        detailNumbers: false,
+        variations: [
+            { text: "Seventy-five million dollars", familiarity: 1 },
+            { text: "This project costs seventy-five million dollars", familiarity: 1 },
+            { text: "The contract is seventy-five million dollars", familiarity: 1 },
+            { text: "It's valued at seventy-five million dollars", familiarity: 2 },
+            { text: "That'll be seventy-five million dollars", familiarity: 2 },
+            { text: "Profits reached seventy-five million dollars", familiarity: 3 },
+            { text: "The total comes to seventy-five million dollars", familiarity: 3 },
+            { text: "Officials estimate seventy-five million dollars", familiarity: 4 }
+        ],
+        choices: ["$75,000,000", "$17,000,000", "$7,500,000", "$750,000,000"],
+        explanation: "'Seventy-five million' - not 'seventeen'"
+    },
+
+    // Question 15: $100,000,000
+    {
+        number: 100000000,
+        correct: "$100,000,000",
+        detailNumbers: false,
+        variations: [
+            { text: "One hundred million dollars", familiarity: 1 },
+            { text: "This facility costs one hundred million dollars", familiarity: 1 },
+            { text: "The budget is one hundred million dollars", familiarity: 1 },
+            { text: "It's priced at one hundred million dollars", familiarity: 2 },
+            { text: "The property is valued at one hundred million dollars", familiarity: 2 },
+            { text: "Revenue was one hundred million dollars", familiarity: 3 },
+            { text: "They earned one hundred million dollars", familiarity: 3 },
+            { text: "The damage totaled one hundred million dollars", familiarity: 4 },
+            { text: "We're talking about roughly one hundred million dollars", familiarity: 4 }
+        ],
+        choices: ["$100,000,000", "$10,000,000", "$1,000,000,000", "$1,000,000"],
+        explanation: "'One hundred million'"
+    },
+
+    // ===== Detailed Numbers (15 questions) =====
+
+    // Question 16: $134,567
+    {
+        number: 134567,
+        correct: "$134,567",
+        detailNumbers: true,
+        variations: [
+            { text: "One hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 1 },
+            { text: "This costs one hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 1 },
+            { text: "The price is one hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 1 },
+            { text: "It's priced at one hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 2 },
+            { text: "The asking price is one hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 2 },
+            { text: "Revenue reached one hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 3 },
+            { text: "Sales hit one hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 3 },
+            { text: "They're looking at one hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 4 }
+        ],
+        choices: ["$134,567", "$143,567", "$134,657", "$143,657"],
+        explanation: "Complex: 'one hundred thirty-four' + 'five hundred sixty-seven'"
+    },
+
+    // Question 17: $256,789
+    {
+        number: 256789,
+        correct: "$256,789",
+        detailNumbers: true,
+        variations: [
+            { text: "Two hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 1 },
+            { text: "This property costs two hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 1 },
+            { text: "The price is two hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 1 },
+            { text: "It's valued at two hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 2 },
+            { text: "That'll be two hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 2 },
+            { text: "Profits reached two hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 3 },
+            { text: "The total comes to two hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 3 },
+            { text: "Officials estimate two hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 4 }
+        ],
+        choices: ["$256,789", "$265,789", "$256,879", "$265,879"],
+        explanation: "'Two hundred fifty-six' + 'seven hundred eighty-nine'"
+    },
+
+    // Question 18: $345,678
+    {
+        number: 345678,
+        correct: "$345,678",
+        detailNumbers: true,
+        variations: [
+            { text: "Three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 1 },
+            { text: "This facility costs three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 1 },
+            { text: "The contract is three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 1 },
+            { text: "It's priced at three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 2 },
+            { text: "The property is valued at three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 2 },
+            { text: "Revenue was three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 3 },
+            { text: "They earned three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 3 },
+            { text: "Reports indicate three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 4 },
+            { text: "We're talking about roughly three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 4 }
+        ],
+        choices: ["$345,678", "$354,678", "$345,768", "$354,768"],
+        explanation: "Sequential pattern: 3-4-5, 6-7-8"
+    },
+
+    // Question 19: $456,789
+    {
+        number: 456789,
+        correct: "$456,789",
+        detailNumbers: true,
+        variations: [
+            { text: "Four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 1 },
+            { text: "This investment is four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 1 },
+            { text: "The budget is four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 1 },
+            { text: "It's valued at four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 2 },
+            { text: "That'll run you four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 2 },
+            { text: "Sales hit four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 3 },
+            { text: "Profits reached four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 3 },
+            { text: "The damage totaled four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 4 }
+        ],
+        choices: ["$456,789", "$465,789", "$456,879", "$465,879"],
+        explanation: "Sequential pattern: 4-5-6, 7-8-9"
+    },
+
+    // Question 20: $567,890
+    {
+        number: 567890,
+        correct: "$567,890",
+        detailNumbers: true,
+        variations: [
+            { text: "Five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 1 },
+            { text: "This costs five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 1 },
+            { text: "The price is five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 1 },
+            { text: "It's priced at five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 2 },
+            { text: "The asking price is five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 2 },
+            { text: "Revenue reached five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 3 },
+            { text: "The total comes to five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 3 },
+            { text: "They're looking at five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 4 }
+        ],
+        choices: ["$567,890", "$576,890", "$567,980", "$576,980"],
+        explanation: "Sequential pattern: 5-6-7, 8-9-0"
+    },
+
+    // Question 21: $678,901
+    {
+        number: 678901,
+        correct: "$678,901",
+        detailNumbers: true,
+        variations: [
+            { text: "Six hundred seventy-eight thousand nine hundred one dollars", familiarity: 1 },
+            { text: "This property costs six hundred seventy-eight thousand nine hundred one dollars", familiarity: 1 },
+            { text: "The contract is six hundred seventy-eight thousand nine hundred one dollars", familiarity: 1 },
+            { text: "It's valued at six hundred seventy-eight thousand nine hundred one dollars", familiarity: 2 },
+            { text: "That'll be six hundred seventy-eight thousand nine hundred one dollars", familiarity: 2 },
+            { text: "Revenue was six hundred seventy-eight thousand nine hundred one dollars", familiarity: 3 },
+            { text: "They earned six hundred seventy-eight thousand nine hundred one dollars", familiarity: 3 },
+            { text: "Officials estimate six hundred seventy-eight thousand nine hundred one dollars", familiarity: 4 }
+        ],
+        choices: ["$678,901", "$687,901", "$678,910", "$687,910"],
+        explanation: "Sequential pattern with wraparound: 6-7-8, 9-0-1"
+    },
+
+    // Question 22: $789,012
+    {
+        number: 789012,
+        correct: "$789,012",
+        detailNumbers: true,
+        variations: [
+            { text: "Seven hundred eighty-nine thousand twelve dollars", familiarity: 1 },
+            { text: "This facility costs seven hundred eighty-nine thousand twelve dollars", familiarity: 1 },
+            { text: "The budget is seven hundred eighty-nine thousand twelve dollars", familiarity: 1 },
+            { text: "It's priced at seven hundred eighty-nine thousand twelve dollars", familiarity: 2 },
+            { text: "The property is valued at seven hundred eighty-nine thousand twelve dollars", familiarity: 2 },
+            { text: "Sales hit seven hundred eighty-nine thousand twelve dollars", familiarity: 3 },
+            { text: "Profits reached seven hundred eighty-nine thousand twelve dollars", familiarity: 3 },
+            { text: "Reports indicate seven hundred eighty-nine thousand twelve dollars", familiarity: 4 },
+            { text: "We're talking about roughly seven hundred eighty-nine thousand twelve dollars", familiarity: 4 }
+        ],
+        choices: ["$789,012", "$798,012", "$789,021", "$798,021"],
+        explanation: "Sequential: 7-8-9, 0-1-2"
+    },
+
+    // Question 23: $890,123
+    {
+        number: 890123,
+        correct: "$890,123",
+        detailNumbers: true,
+        variations: [
+            { text: "Eight hundred ninety thousand one hundred twenty-three dollars", familiarity: 1 },
+            { text: "This costs eight hundred ninety thousand one hundred twenty-three dollars", familiarity: 1 },
+            { text: "The price is eight hundred ninety thousand one hundred twenty-three dollars", familiarity: 1 },
+            { text: "It's valued at eight hundred ninety thousand one hundred twenty-three dollars", familiarity: 2 },
+            { text: "That'll run you eight hundred ninety thousand one hundred twenty-three dollars", familiarity: 2 },
+            { text: "Revenue reached eight hundred ninety thousand one hundred twenty-three dollars", familiarity: 3 },
+            { text: "The total comes to eight hundred ninety thousand one hundred twenty-three dollars", familiarity: 3 },
+            { text: "The damage totaled eight hundred ninety thousand one hundred twenty-three dollars", familiarity: 4 }
+        ],
+        choices: ["$890,123", "$980,123", "$890,213", "$980,213"],
+        explanation: "Sequential: 8-9-0, 1-2-3"
+    },
+
+    // Question 24: $1,234,567
+    {
+        number: 1234567,
+        correct: "$1,234,567",
+        detailNumbers: true,
+        variations: [
+            { text: "One million two hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 1 },
+            { text: "This costs one million two hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 1 },
+            { text: "The price is one million two hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 1 },
+            { text: "It's priced at one million two hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 2 },
+            { text: "The asking price is one million two hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 2 },
+            { text: "Revenue was one million two hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 3 },
+            { text: "They earned one million two hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 3 },
+            { text: "Officials estimate one million two hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 4 }
+        ],
+        choices: ["$1,234,567", "$1,243,567", "$1,234,657", "$1,243,657"],
+        explanation: "Large complex number: 1-2-3-4-5-6-7 sequence"
+    },
+
+    // Question 25: $2,345,678
+    {
+        number: 2345678,
+        correct: "$2,345,678",
+        detailNumbers: true,
+        variations: [
+            { text: "Two million three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 1 },
+            { text: "This property costs two million three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 1 },
+            { text: "The contract is two million three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 1 },
+            { text: "It's valued at two million three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 2 },
+            { text: "That'll be two million three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 2 },
+            { text: "Sales hit two million three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 3 },
+            { text: "Profits reached two million three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 3 },
+            { text: "Reports indicate two million three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 4 },
+            { text: "We're talking about roughly two million three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 4 }
+        ],
+        choices: ["$2,345,678", "$2,354,678", "$2,345,768", "$2,354,768"],
+        explanation: "Sequential: 2-3-4-5-6-7-8"
+    },
+
+    // Question 26: $3,456,789
+    {
+        number: 3456789,
+        correct: "$3,456,789",
+        detailNumbers: true,
+        variations: [
+            { text: "Three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 1 },
+            { text: "This facility costs three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 1 },
+            { text: "The budget is three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 1 },
+            { text: "It's priced at three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 2 },
+            { text: "The property is valued at three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 2 },
+            { text: "Revenue reached three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 3 },
+            { text: "The total comes to three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 3 },
+            { text: "The damage totaled three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 4 }
+        ],
+        choices: ["$3,456,789", "$3,465,789", "$3,456,879", "$3,465,879"],
+        explanation: "Sequential: 3-4-5-6-7-8-9"
+    },
+
+    // Question 27: $4,567,890
+    {
+        number: 4567890,
+        correct: "$4,567,890",
+        detailNumbers: true,
+        variations: [
+            { text: "Four million five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 1 },
+            { text: "This investment is four million five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 1 },
+            { text: "The contract is four million five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 1 },
+            { text: "It's valued at four million five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 2 },
+            { text: "That'll run you four million five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 2 },
+            { text: "Revenue was four million five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 3 },
+            { text: "They earned four million five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 3 },
+            { text: "Officials estimate four million five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 4 }
+        ],
+        choices: ["$4,567,890", "$4,576,890", "$4,567,980", "$4,576,980"],
+        explanation: "Sequential: 4-5-6-7-8-9-0"
+    },
+
+    // Question 28: $15,678,900
+    {
+        number: 15678900,
+        correct: "$15,678,900",
+        detailNumbers: true,
+        variations: [
+            { text: "Fifteen million six hundred seventy-eight thousand nine hundred dollars", familiarity: 1 },
+            { text: "This facility costs fifteen million six hundred seventy-eight thousand nine hundred dollars", familiarity: 1 },
+            { text: "The price is fifteen million six hundred seventy-eight thousand nine hundred dollars", familiarity: 1 },
+            { text: "It's priced at fifteen million six hundred seventy-eight thousand nine hundred dollars", familiarity: 2 },
+            { text: "The asking price is fifteen million six hundred seventy-eight thousand nine hundred dollars", familiarity: 2 },
+            { text: "Sales hit fifteen million six hundred seventy-eight thousand nine hundred dollars", familiarity: 3 },
+            { text: "Profits reached fifteen million six hundred seventy-eight thousand nine hundred dollars", familiarity: 3 },
+            { text: "Reports indicate fifteen million six hundred seventy-eight thousand nine hundred dollars", familiarity: 4 },
+            { text: "We're talking about roughly fifteen million six hundred seventy-eight thousand nine hundred dollars", familiarity: 4 }
+        ],
+        choices: ["$15,678,900", "$16,678,900", "$15,768,900", "$16,768,900"],
+        explanation: "Very complex multi-part number"
+    },
+
+    // Question 29: $23,456,789
+    {
+        number: 23456789,
+        correct: "$23,456,789",
+        detailNumbers: true,
+        variations: [
+            { text: "Twenty-three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 1 },
+            { text: "This costs twenty-three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 1 },
+            { text: "The contract is twenty-three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 1 },
+            { text: "It's valued at twenty-three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 2 },
+            { text: "That'll be twenty-three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 2 },
+            { text: "Revenue reached twenty-three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 3 },
+            { text: "The total comes to twenty-three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 3 },
+            { text: "The damage totaled twenty-three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 4 }
+        ],
+        choices: ["$23,456,789", "$32,456,789", "$23,457,789", "$32,457,789"],
+        explanation: "Very long detailed number"
+    },
+
+    // Question 30: $45,678,901
+    {
+        number: 45678901,
+        correct: "$45,678,901",
+        detailNumbers: true,
+        variations: [
+            { text: "Forty-five million six hundred seventy-eight thousand nine hundred one dollars", familiarity: 1 },
+            { text: "This property costs forty-five million six hundred seventy-eight thousand nine hundred one dollars", familiarity: 1 },
+            { text: "The budget is forty-five million six hundred seventy-eight thousand nine hundred one dollars", familiarity: 1 },
+            { text: "It's priced at forty-five million six hundred seventy-eight thousand nine hundred one dollars", familiarity: 2 },
+            { text: "The property is valued at forty-five million six hundred seventy-eight thousand nine hundred one dollars", familiarity: 2 },
+            { text: "Revenue was forty-five million six hundred seventy-eight thousand nine hundred one dollars", familiarity: 3 },
+            { text: "They earned forty-five million six hundred seventy-eight thousand nine hundred one dollars", familiarity: 3 },
+            { text: "Officials estimate forty-five million six hundred seventy-eight thousand nine hundred one dollars", familiarity: 4 },
+            { text: "We're talking about roughly forty-five million six hundred seventy-eight thousand nine hundred one dollars", familiarity: 4 }
+        ],
+        choices: ["$45,678,901", "$54,678,901", "$45,687,901", "$54,687,901"],
+        explanation: "Large sequential pattern: 4-5-6-7-8-9-0-1"
+    }
+];
+
+// Export for use in other modules
+// if (typeof module !== 'undefined' && module.exports) {
+    // module.exports = variations_intermediate;
+// }
+
+
+// Advanced Level Data (Million ~ Trillion)
+// Each question has 8-10 variations with familiarity levels 1-4
+const variations_advanced = [
+  // ===== Clean Numbers (15 questions) =====
+
+  // 1. $1.5M (1,500,000)
+  {
+    number: 1500000,
+    correct: "$1.5M",
+    choices: ["$1.5M", "$15M", "$150,000", "$1,500,000,000"],
+    detailNumbers: false,
+    variations: [
+      { text: "One point five million dollars", familiarity: 1 },
+      { text: "This costs one point five million dollars", familiarity: 1 },
+      { text: "The price is one point five million dollars", familiarity: 1 },
+      { text: "It's priced at one point five million", familiarity: 2 },
+      { text: "That's one and a half million dollars", familiarity: 2 },
+      { text: "We're looking at one point five million", familiarity: 2 },
+      { text: "The company is valued at one point five million", familiarity: 3 },
+      { text: "Revenue hit one point five million", familiarity: 3 },
+      { text: "They want approximately one point five million for it", familiarity: 4 },
+      { text: "We're talking about roughly one and a half million dollars here", familiarity: 4 }
     ]
+  },
+
+  // 2. $15M (15,000,000)
+  {
+    number: 15000000,
+    correct: "$15,000,000",
+    choices: ["$15M", "$1.5M", "$150M", "$15B"],
+    detailNumbers: false,
+    variations: [
+      { text: "Fifteen million dollars", familiarity: 1 },
+      { text: "This costs fifteen million dollars", familiarity: 1 },
+      { text: "The price is fifteen million dollars", familiarity: 1 },
+      { text: "It's priced at fifteen million", familiarity: 2 },
+      { text: "We're looking at fifteen million", familiarity: 2 },
+      { text: "The company is valued at fifteen million", familiarity: 3 },
+      { text: "Market cap is fifteen million", familiarity: 3 },
+      { text: "They paid approximately fifteen million for it", familiarity: 4 },
+      { text: "The deal is worth roughly fifteen million dollars", familiarity: 4 }
+    ]
+  },
+
+  // 3. $150M (150,000,000)
+  {
+    number: 150000000,
+    correct: "$150M",
+    choices: ["$150M", "$15M", "$1.5B", "$150,000,000,000"],
+    detailNumbers: false,
+    variations: [
+      { text: "One hundred fifty million dollars", familiarity: 1 },
+      { text: "This costs one hundred fifty million dollars", familiarity: 1 },
+      { text: "The price is one hundred fifty million dollars", familiarity: 1 },
+      { text: "It's priced at one hundred fifty million", familiarity: 2 },
+      { text: "We're looking at one hundred fifty million", familiarity: 2 },
+      { text: "Revenue reached one hundred fifty million", familiarity: 3 },
+      { text: "Profits hit one hundred fifty million", familiarity: 3 },
+      { text: "The acquisition cost approximately one hundred fifty million", familiarity: 4 },
+      { text: "Analysts estimate one hundred fifty million dollars", familiarity: 4 }
+    ]
+  },
+
+  // 4. $1.5B (1,500,000,000)
+  {
+    number: 1500000000,
+    correct: "$1,500,000,000",
+    choices: ["$1.5B", "$15B", "$1,500,000", "$15,000,000,000"],
+    detailNumbers: false,
+    variations: [
+      { text: "One point five billion dollars", familiarity: 1 },
+      { text: "This costs one point five billion dollars", familiarity: 1 },
+      { text: "The price is one point five billion dollars", familiarity: 1 },
+      { text: "It's priced at one point five billion", familiarity: 2 },
+      { text: "That's one and a half billion dollars", familiarity: 2 },
+      { text: "We're looking at one point five billion", familiarity: 2 },
+      { text: "The company is valued at one point five billion", familiarity: 3 },
+      { text: "Market cap reached one point five billion", familiarity: 3 },
+      { text: "They want approximately one point five billion for it", familiarity: 4 },
+      { text: "We're talking about roughly one and a half billion dollars here", familiarity: 4 }
+    ]
+  },
+
+  // 5. $15B (15,000,000,000)
+  {
+    number: 15000000000,
+    correct: "$15B",
+    choices: ["$15B", "$1.5B", "$150B", "$1.5T"],
+    detailNumbers: false,
+    variations: [
+      { text: "Fifteen billion dollars", familiarity: 1 },
+      { text: "This costs fifteen billion dollars", familiarity: 1 },
+      { text: "The price is fifteen billion dollars", familiarity: 1 },
+      { text: "It's priced at fifteen billion", familiarity: 2 },
+      { text: "We're looking at fifteen billion", familiarity: 2 },
+      { text: "The company is valued at fifteen billion", familiarity: 3 },
+      { text: "Revenue hit fifteen billion", familiarity: 3 },
+      { text: "They paid approximately fifteen billion for it", familiarity: 4 },
+      { text: "The deal is worth roughly fifteen billion dollars", familiarity: 4 }
+    ]
+  },
+
+  // 6. $150B (150,000,000,000)
+  {
+    number: 150000000000,
+    correct: "$150B",
+    choices: ["$150B", "$15B", "$1.5T", "$150,000,000,000,000"],
+    detailNumbers: false,
+    variations: [
+      { text: "One hundred fifty billion dollars", familiarity: 1 },
+      { text: "This costs one hundred fifty billion dollars", familiarity: 1 },
+      { text: "The price is one hundred fifty billion dollars", familiarity: 1 },
+      { text: "It's priced at one hundred fifty billion", familiarity: 2 },
+      { text: "We're looking at one hundred fifty billion", familiarity: 2 },
+      { text: "Market cap reached one hundred fifty billion", familiarity: 3 },
+      { text: "GDP stands at one hundred fifty billion", familiarity: 3 },
+      { text: "The budget is approximately one hundred fifty billion", familiarity: 4 },
+      { text: "Losses totaled roughly one hundred fifty billion dollars", familiarity: 4 }
+    ]
+  },
+
+  // 7. $1.5T (1,500,000,000,000)
+  {
+    number: 1500000000000,
+    correct: "$1.5T",
+    choices: ["$1.5T", "$15T", "$1,500,000,000", "$15,000,000,000,000"],
+    detailNumbers: false,
+    variations: [
+      { text: "One point five trillion dollars", familiarity: 1 },
+      { text: "This costs one point five trillion dollars", familiarity: 1 },
+      { text: "The price is one point five trillion dollars", familiarity: 1 },
+      { text: "It's priced at one point five trillion", familiarity: 2 },
+      { text: "That's one and a half trillion dollars", familiarity: 2 },
+      { text: "We're looking at one point five trillion", familiarity: 2 },
+      { text: "GDP stands at one point five trillion", familiarity: 3 },
+      { text: "Revenue hit one point five trillion", familiarity: 3 },
+      { text: "The budget is approximately one point five trillion", familiarity: 4 },
+      { text: "We're talking about roughly one and a half trillion dollars here", familiarity: 4 }
+    ]
+  },
+
+  // 8. $15T (15,000,000,000,000)
+  {
+    number: 15000000000000,
+    correct: "$15T",
+    choices: ["$15T", "$1.5T", "$150T", "$15,000,000,000"],
+    detailNumbers: false,
+    variations: [
+      { text: "Fifteen trillion dollars", familiarity: 1 },
+      { text: "This costs fifteen trillion dollars", familiarity: 1 },
+      { text: "The price is fifteen trillion dollars", familiarity: 1 },
+      { text: "It's priced at fifteen trillion", familiarity: 2 },
+      { text: "We're looking at fifteen trillion", familiarity: 2 },
+      { text: "GDP increased to fifteen trillion", familiarity: 3 },
+      { text: "Market cap reached fifteen trillion", familiarity: 3 },
+      { text: "The national debt is approximately fifteen trillion", familiarity: 4 },
+      { text: "Infrastructure spending totaled roughly fifteen trillion dollars", familiarity: 4 }
+    ]
+  },
+
+  // 9. $2.5M (2,500,000)
+  {
+    number: 2500000,
+    correct: "$2,500,000",
+    choices: ["$2.5M", "$25M", "$250,000", "$2,500,000,000"],
+    detailNumbers: false,
+    variations: [
+      { text: "Two point five million dollars", familiarity: 1 },
+      { text: "This costs two point five million dollars", familiarity: 1 },
+      { text: "The price is two point five million dollars", familiarity: 1 },
+      { text: "It's priced at two point five million", familiarity: 2 },
+      { text: "That's two and a half million dollars", familiarity: 2 },
+      { text: "We're looking at two point five million", familiarity: 2 },
+      { text: "The company is valued at two point five million", familiarity: 3 },
+      { text: "Revenue hit two point five million", familiarity: 3 },
+      { text: "They want approximately two point five million for it", familiarity: 4 },
+      { text: "The deal is worth roughly two and a half million dollars", familiarity: 4 }
+    ]
+  },
+
+  // 10. $25M (25,000,000)
+  {
+    number: 25000000,
+    correct: "$25M",
+    choices: ["$25M", "$2.5M", "$250M", "$25B"],
+    detailNumbers: false,
+    variations: [
+      { text: "Twenty-five million dollars", familiarity: 1 },
+      { text: "This costs twenty-five million dollars", familiarity: 1 },
+      { text: "The price is twenty-five million dollars", familiarity: 1 },
+      { text: "It's priced at twenty-five million", familiarity: 2 },
+      { text: "We're looking at twenty-five million", familiarity: 2 },
+      { text: "The company is valued at twenty-five million", familiarity: 3 },
+      { text: "Market cap is twenty-five million", familiarity: 3 },
+      { text: "They paid approximately twenty-five million for it", familiarity: 4 },
+      { text: "Analysts estimate twenty-five million dollars", familiarity: 4 }
+    ]
+  },
+
+  // 11. $3.5B (3,500,000,000)
+  {
+    number: 3500000000,
+    correct: "$3.5B",
+    choices: ["$3.5B", "$35B", "$3,500,000", "$35,000,000,000"],
+    detailNumbers: false,
+    variations: [
+      { text: "Three point five billion dollars", familiarity: 1 },
+      { text: "This costs three point five billion dollars", familiarity: 1 },
+      { text: "The price is three point five billion dollars", familiarity: 1 },
+      { text: "It's priced at three point five billion", familiarity: 2 },
+      { text: "That's three and a half billion dollars", familiarity: 2 },
+      { text: "We're looking at three point five billion", familiarity: 2 },
+      { text: "The company is valued at three point five billion", familiarity: 3 },
+      { text: "Revenue reached three point five billion", familiarity: 3 },
+      { text: "They want approximately three point five billion for it", familiarity: 4 },
+      { text: "The acquisition cost roughly three and a half billion dollars", familiarity: 4 }
+    ]
+  },
+
+  // 12. $35B (35,000,000,000)
+  {
+    number: 35000000000,
+    correct: "$35,000,000,000",
+    choices: ["$35B", "$3.5B", "$350B", "$3.5T"],
+    detailNumbers: false,
+    variations: [
+      { text: "Thirty-five billion dollars", familiarity: 1 },
+      { text: "This costs thirty-five billion dollars", familiarity: 1 },
+      { text: "The price is thirty-five billion dollars", familiarity: 1 },
+      { text: "It's priced at thirty-five billion", familiarity: 2 },
+      { text: "We're looking at thirty-five billion", familiarity: 2 },
+      { text: "The company is valued at thirty-five billion", familiarity: 3 },
+      { text: "Market cap reached thirty-five billion", familiarity: 3 },
+      { text: "They paid approximately thirty-five billion for it", familiarity: 4 },
+      { text: "The deal is worth roughly thirty-five billion dollars", familiarity: 4 }
+    ]
+  },
+
+  // 13. $4.5T (4,500,000,000,000)
+  {
+    number: 4500000000000,
+    correct: "$4.5T",
+    choices: ["$4.5T", "$45T", "$4,500,000,000", "$45,000,000,000,000"],
+    detailNumbers: false,
+    variations: [
+      { text: "Four point five trillion dollars", familiarity: 1 },
+      { text: "This costs four point five trillion dollars", familiarity: 1 },
+      { text: "The price is four point five trillion dollars", familiarity: 1 },
+      { text: "It's priced at four point five trillion", familiarity: 2 },
+      { text: "That's four and a half trillion dollars", familiarity: 2 },
+      { text: "We're looking at four point five trillion", familiarity: 2 },
+      { text: "GDP stands at four point five trillion", familiarity: 3 },
+      { text: "Revenue hit four point five trillion", familiarity: 3 },
+      { text: "The budget is approximately four point five trillion", familiarity: 4 },
+      { text: "We're talking about roughly four and a half trillion dollars here", familiarity: 4 }
+    ]
+  },
+
+  // 14. $500M (500,000,000)
+  {
+    number: 500000000,
+    correct: "$500,000,000",
+    choices: ["$500M", "$5B", "$50M", "$500B"],
+    detailNumbers: false,
+    variations: [
+      { text: "Five hundred million dollars", familiarity: 1 },
+      { text: "This costs five hundred million dollars", familiarity: 1 },
+      { text: "The price is five hundred million dollars", familiarity: 1 },
+      { text: "It's priced at five hundred million", familiarity: 2 },
+      { text: "We're looking at five hundred million", familiarity: 2 },
+      { text: "The company is valued at five hundred million", familiarity: 3 },
+      { text: "Profits reached five hundred million", familiarity: 3 },
+      { text: "They paid approximately five hundred million for it", familiarity: 4 },
+      { text: "Analysts estimate five hundred million dollars", familiarity: 4 }
+    ]
+  },
+
+  // 15. $750B (750,000,000,000)
+  {
+    number: 750000000000,
+    correct: "$750B",
+    choices: ["$750B", "$7.5T", "$75B", "$750,000,000,000,000"],
+    detailNumbers: false,
+    variations: [
+      { text: "Seven hundred fifty billion dollars", familiarity: 1 },
+      { text: "This costs seven hundred fifty billion dollars", familiarity: 1 },
+      { text: "The price is seven hundred fifty billion dollars", familiarity: 1 },
+      { text: "It's priced at seven hundred fifty billion", familiarity: 2 },
+      { text: "We're looking at seven hundred fifty billion", familiarity: 2 },
+      { text: "Market cap reached seven hundred fifty billion", familiarity: 3 },
+      { text: "The bailout package was seven hundred fifty billion", familiarity: 3 },
+      { text: "GDP stands at approximately seven hundred fifty billion", familiarity: 4 },
+      { text: "Infrastructure spending totaled roughly seven hundred fifty billion dollars", familiarity: 4 }
+    ]
+  },
+
+  // ===== Detailed Numbers (15 questions) =====
+
+  // 16. $1,234,567
+  {
+    number: 1234567,
+    correct: "$1,234,567",
+    choices: ["$1,234,567", "$1,243,567", "$1,234,657", "$1,243,657"],
+    detailNumbers: true,
+    variations: [
+      { text: "One million two hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 1 },
+      { text: "This costs one million two hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 1 },
+      { text: "The price is one million two hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 1 },
+      { text: "It's priced at one million two hundred thirty-four thousand five hundred sixty-seven", familiarity: 2 },
+      { text: "We're looking at one million two hundred thirty-four thousand five hundred sixty-seven", familiarity: 2 },
+      { text: "The company is valued at one million two hundred thirty-four thousand five hundred sixty-seven", familiarity: 3 },
+      { text: "Revenue hit one million two hundred thirty-four thousand five hundred sixty-seven", familiarity: 3 },
+      { text: "They want approximately one million two hundred thirty-four thousand five hundred sixty-seven for it", familiarity: 4 },
+      { text: "The deal is worth one million two hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 4 }
+    ]
+  },
+
+  // 17. $12,345,678
+  {
+    number: 12345678,
+    correct: "$12,345,678",
+    choices: ["$12,345,678", "$13,345,678", "$12,346,678", "$13,346,678"],
+    detailNumbers: true,
+    variations: [
+      { text: "Twelve million three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 1 },
+      { text: "This costs twelve million three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 1 },
+      { text: "The price is twelve million three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 1 },
+      { text: "It's priced at twelve million three hundred forty-five thousand six hundred seventy-eight", familiarity: 2 },
+      { text: "We're looking at twelve million three hundred forty-five thousand six hundred seventy-eight", familiarity: 2 },
+      { text: "Market cap is twelve million three hundred forty-five thousand six hundred seventy-eight", familiarity: 3 },
+      { text: "Revenue reached twelve million three hundred forty-five thousand six hundred seventy-eight", familiarity: 3 },
+      { text: "They paid approximately twelve million three hundred forty-five thousand six hundred seventy-eight for it", familiarity: 4 },
+      { text: "Analysts estimate twelve million three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 4 }
+    ]
+  },
+
+  // 18. $123,456,789
+  {
+    number: 123456789,
+    correct: "$123,456,789",
+    choices: ["$123,456,789", "$132,456,789", "$123,465,789", "$132,465,789"],
+    detailNumbers: true,
+    variations: [
+      { text: "One hundred twenty-three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 1 },
+      { text: "This costs one hundred twenty-three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 1 },
+      { text: "The price is one hundred twenty-three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 1 },
+      { text: "It's priced at one hundred twenty-three million four hundred fifty-six thousand seven hundred eighty-nine", familiarity: 2 },
+      { text: "We're looking at one hundred twenty-three million four hundred fifty-six thousand seven hundred eighty-nine", familiarity: 2 },
+      { text: "The company is valued at one hundred twenty-three million four hundred fifty-six thousand seven hundred eighty-nine", familiarity: 3 },
+      { text: "Profits reached one hundred twenty-three million four hundred fifty-six thousand seven hundred eighty-nine", familiarity: 3 },
+      { text: "The acquisition cost approximately one hundred twenty-three million four hundred fifty-six thousand seven hundred eighty-nine", familiarity: 4 },
+      { text: "The deal is worth one hundred twenty-three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 4 }
+    ]
+  },
+
+  // 19. $1,234,567,890
+  {
+    number: 1234567890,
+    correct: "$1,234,567,890",
+    choices: ["$1,234,567,890", "$1,243,567,890", "$1,234,576,890", "$1,243,576,890"],
+    detailNumbers: true,
+    variations: [
+      { text: "One billion two hundred thirty-four million five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 1 },
+      { text: "This costs one billion two hundred thirty-four million five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 1 },
+      { text: "The price is one billion two hundred thirty-four million five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 1 },
+      { text: "It's priced at one billion two hundred thirty-four million five hundred sixty-seven thousand eight hundred ninety", familiarity: 2 },
+      { text: "We're looking at one billion two hundred thirty-four million five hundred sixty-seven thousand eight hundred ninety", familiarity: 2 },
+      { text: "Market cap reached one billion two hundred thirty-four million five hundred sixty-seven thousand eight hundred ninety", familiarity: 3 },
+      { text: "Revenue hit one billion two hundred thirty-four million five hundred sixty-seven thousand eight hundred ninety", familiarity: 3 },
+      { text: "They want approximately one billion two hundred thirty-four million five hundred sixty-seven thousand eight hundred ninety for it", familiarity: 4 },
+      { text: "The company is valued at one billion two hundred thirty-four million five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 4 }
+    ]
+  },
+
+  // 20. $12,345,678,901
+  {
+    number: 12345678901,
+    correct: "$12,345,678,901",
+    choices: ["$12,345,678,901", "$13,345,678,901", "$12,346,678,901", "$13,346,678,901"],
+    detailNumbers: true,
+    variations: [
+      { text: "Twelve billion three hundred forty-five million six hundred seventy-eight thousand nine hundred one dollars", familiarity: 1 },
+      { text: "This costs twelve billion three hundred forty-five million six hundred seventy-eight thousand nine hundred one dollars", familiarity: 1 },
+      { text: "The price is twelve billion three hundred forty-five million six hundred seventy-eight thousand nine hundred one dollars", familiarity: 1 },
+      { text: "It's priced at twelve billion three hundred forty-five million six hundred seventy-eight thousand nine hundred one", familiarity: 2 },
+      { text: "We're looking at twelve billion three hundred forty-five million six hundred seventy-eight thousand nine hundred one", familiarity: 2 },
+      { text: "The company is valued at twelve billion three hundred forty-five million six hundred seventy-eight thousand nine hundred one", familiarity: 3 },
+      { text: "Market cap is twelve billion three hundred forty-five million six hundred seventy-eight thousand nine hundred one", familiarity: 3 },
+      { text: "They paid approximately twelve billion three hundred forty-five million six hundred seventy-eight thousand nine hundred one for it", familiarity: 4 },
+      { text: "Analysts estimate twelve billion three hundred forty-five million six hundred seventy-eight thousand nine hundred one dollars", familiarity: 4 }
+    ]
+  },
+
+  // 21. $123,456,789,012
+  {
+    number: 123456789012,
+    correct: "$123,456,789,012",
+    choices: ["$123,456,789,012", "$132,456,789,012", "$123,465,789,012", "$132,465,789,012"],
+    detailNumbers: true,
+    variations: [
+      { text: "One hundred twenty-three billion four hundred fifty-six million seven hundred eighty-nine thousand twelve dollars", familiarity: 1 },
+      { text: "This costs one hundred twenty-three billion four hundred fifty-six million seven hundred eighty-nine thousand twelve dollars", familiarity: 1 },
+      { text: "The price is one hundred twenty-three billion four hundred fifty-six million seven hundred eighty-nine thousand twelve dollars", familiarity: 1 },
+      { text: "It's priced at one hundred twenty-three billion four hundred fifty-six million seven hundred eighty-nine thousand twelve", familiarity: 2 },
+      { text: "We're looking at one hundred twenty-three billion four hundred fifty-six million seven hundred eighty-nine thousand twelve", familiarity: 2 },
+      { text: "Revenue reached one hundred twenty-three billion four hundred fifty-six million seven hundred eighty-nine thousand twelve", familiarity: 3 },
+      { text: "Profits hit one hundred twenty-three billion four hundred fifty-six million seven hundred eighty-nine thousand twelve", familiarity: 3 },
+      { text: "The acquisition cost approximately one hundred twenty-three billion four hundred fifty-six million seven hundred eighty-nine thousand twelve", familiarity: 4 },
+      { text: "The deal is worth one hundred twenty-three billion four hundred fifty-six million seven hundred eighty-nine thousand twelve dollars", familiarity: 4 }
+    ]
+  },
+
+  // 22. $234,567,890,123
+  {
+    number: 234567890123,
+    correct: "$234,567,890,123",
+    choices: ["$234,567,890,123", "$243,567,890,123", "$234,576,890,123", "$243,576,890,123"],
+    detailNumbers: true,
+    variations: [
+      { text: "Two hundred thirty-four billion five hundred sixty-seven million eight hundred ninety thousand one hundred twenty-three dollars", familiarity: 1 },
+      { text: "This costs two hundred thirty-four billion five hundred sixty-seven million eight hundred ninety thousand one hundred twenty-three dollars", familiarity: 1 },
+      { text: "The price is two hundred thirty-four billion five hundred sixty-seven million eight hundred ninety thousand one hundred twenty-three dollars", familiarity: 1 },
+      { text: "It's priced at two hundred thirty-four billion five hundred sixty-seven million eight hundred ninety thousand one hundred twenty-three", familiarity: 2 },
+      { text: "We're looking at two hundred thirty-four billion five hundred sixty-seven million eight hundred ninety thousand one hundred twenty-three", familiarity: 2 },
+      { text: "The company is valued at two hundred thirty-four billion five hundred sixty-seven million eight hundred ninety thousand one hundred twenty-three", familiarity: 3 },
+      { text: "Market cap reached two hundred thirty-four billion five hundred sixty-seven million eight hundred ninety thousand one hundred twenty-three", familiarity: 3 },
+      { text: "They want approximately two hundred thirty-four billion five hundred sixty-seven million eight hundred ninety thousand one hundred twenty-three for it", familiarity: 4 },
+      { text: "GDP stands at two hundred thirty-four billion five hundred sixty-seven million eight hundred ninety thousand one hundred twenty-three dollars", familiarity: 4 }
+    ]
+  },
+
+  // 23. $345,678,901,234
+  {
+    number: 345678901234,
+    correct: "$345,678,901,234",
+    choices: ["$345,678,901,234", "$354,678,901,234", "$345,687,901,234", "$354,687,901,234"],
+    detailNumbers: true,
+    variations: [
+      { text: "Three hundred forty-five billion six hundred seventy-eight million nine hundred one thousand two hundred thirty-four dollars", familiarity: 1 },
+      { text: "This costs three hundred forty-five billion six hundred seventy-eight million nine hundred one thousand two hundred thirty-four dollars", familiarity: 1 },
+      { text: "The price is three hundred forty-five billion six hundred seventy-eight million nine hundred one thousand two hundred thirty-four dollars", familiarity: 1 },
+      { text: "It's priced at three hundred forty-five billion six hundred seventy-eight million nine hundred one thousand two hundred thirty-four", familiarity: 2 },
+      { text: "We're looking at three hundred forty-five billion six hundred seventy-eight million nine hundred one thousand two hundred thirty-four", familiarity: 2 },
+      { text: "Revenue hit three hundred forty-five billion six hundred seventy-eight million nine hundred one thousand two hundred thirty-four", familiarity: 3 },
+      { text: "Profits reached three hundred forty-five billion six hundred seventy-eight million nine hundred one thousand two hundred thirty-four", familiarity: 3 },
+      { text: "The budget is approximately three hundred forty-five billion six hundred seventy-eight million nine hundred one thousand two hundred thirty-four", familiarity: 4 },
+      { text: "Analysts estimate three hundred forty-five billion six hundred seventy-eight million nine hundred one thousand two hundred thirty-four dollars", familiarity: 4 }
+    ]
+  },
+
+  // 24. $456,789,012,345
+  {
+    number: 456789012345,
+    correct: "$456,789,012,345",
+    choices: ["$456,789,012,345", "$465,789,012,345", "$456,798,012,345", "$465,798,012,345"],
+    detailNumbers: true,
+    variations: [
+      { text: "Four hundred fifty-six billion seven hundred eighty-nine million twelve thousand three hundred forty-five dollars", familiarity: 1 },
+      { text: "This costs four hundred fifty-six billion seven hundred eighty-nine million twelve thousand three hundred forty-five dollars", familiarity: 1 },
+      { text: "The price is four hundred fifty-six billion seven hundred eighty-nine million twelve thousand three hundred forty-five dollars", familiarity: 1 },
+      { text: "It's priced at four hundred fifty-six billion seven hundred eighty-nine million twelve thousand three hundred forty-five", familiarity: 2 },
+      { text: "We're looking at four hundred fifty-six billion seven hundred eighty-nine million twelve thousand three hundred forty-five", familiarity: 2 },
+      { text: "The company is valued at four hundred fifty-six billion seven hundred eighty-nine million twelve thousand three hundred forty-five", familiarity: 3 },
+      { text: "Market cap is four hundred fifty-six billion seven hundred eighty-nine million twelve thousand three hundred forty-five", familiarity: 3 },
+      { text: "They paid approximately four hundred fifty-six billion seven hundred eighty-nine million twelve thousand three hundred forty-five for it", familiarity: 4 },
+      { text: "The deal is worth four hundred fifty-six billion seven hundred eighty-nine million twelve thousand three hundred forty-five dollars", familiarity: 4 }
+    ]
+  },
+
+  // 25. $567,890,123,456
+  {
+    number: 567890123456,
+    correct: "$567,890,123,456",
+    choices: ["$567,890,123,456", "$576,890,123,456", "$567,980,123,456", "$576,980,123,456"],
+    detailNumbers: true,
+    variations: [
+      { text: "Five hundred sixty-seven billion eight hundred ninety million one hundred twenty-three thousand four hundred fifty-six dollars", familiarity: 1 },
+      { text: "This costs five hundred sixty-seven billion eight hundred ninety million one hundred twenty-three thousand four hundred fifty-six dollars", familiarity: 1 },
+      { text: "The price is five hundred sixty-seven billion eight hundred ninety million one hundred twenty-three thousand four hundred fifty-six dollars", familiarity: 1 },
+      { text: "It's priced at five hundred sixty-seven billion eight hundred ninety million one hundred twenty-three thousand four hundred fifty-six", familiarity: 2 },
+      { text: "We're looking at five hundred sixty-seven billion eight hundred ninety million one hundred twenty-three thousand four hundred fifty-six", familiarity: 2 },
+      { text: "Revenue reached five hundred sixty-seven billion eight hundred ninety million one hundred twenty-three thousand four hundred fifty-six", familiarity: 3 },
+      { text: "GDP stands at five hundred sixty-seven billion eight hundred ninety million one hundred twenty-three thousand four hundred fifty-six", familiarity: 3 },
+      { text: "The budget is approximately five hundred sixty-seven billion eight hundred ninety million one hundred twenty-three thousand four hundred fifty-six", familiarity: 4 },
+      { text: "Infrastructure spending totaled five hundred sixty-seven billion eight hundred ninety million one hundred twenty-three thousand four hundred fifty-six dollars", familiarity: 4 }
+    ]
+  },
+
+  // 26. $678,901,234,567
+  {
+    number: 678901234567,
+    correct: "$678,901,234,567",
+    choices: ["$678,901,234,567", "$687,901,234,567", "$678,910,234,567", "$687,910,234,567"],
+    detailNumbers: true,
+    variations: [
+      { text: "Six hundred seventy-eight billion nine hundred one million two hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 1 },
+      { text: "This costs six hundred seventy-eight billion nine hundred one million two hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 1 },
+      { text: "The price is six hundred seventy-eight billion nine hundred one million two hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 1 },
+      { text: "It's priced at six hundred seventy-eight billion nine hundred one million two hundred thirty-four thousand five hundred sixty-seven", familiarity: 2 },
+      { text: "We're looking at six hundred seventy-eight billion nine hundred one million two hundred thirty-four thousand five hundred sixty-seven", familiarity: 2 },
+      { text: "The company is valued at six hundred seventy-eight billion nine hundred one million two hundred thirty-four thousand five hundred sixty-seven", familiarity: 3 },
+      { text: "Market cap reached six hundred seventy-eight billion nine hundred one million two hundred thirty-four thousand five hundred sixty-seven", familiarity: 3 },
+      { text: "They want approximately six hundred seventy-eight billion nine hundred one million two hundred thirty-four thousand five hundred sixty-seven for it", familiarity: 4 },
+      { text: "Profits hit six hundred seventy-eight billion nine hundred one million two hundred thirty-four thousand five hundred sixty-seven dollars", familiarity: 4 }
+    ]
+  },
+
+  // 27. $789,012,345,678
+  {
+    number: 789012345678,
+    correct: "$789,012,345,678",
+    choices: ["$789,012,345,678", "$798,012,345,678", "$789,021,345,678", "$798,021,345,678"],
+    detailNumbers: true,
+    variations: [
+      { text: "Seven hundred eighty-nine billion twelve million three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 1 },
+      { text: "This costs seven hundred eighty-nine billion twelve million three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 1 },
+      { text: "The price is seven hundred eighty-nine billion twelve million three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 1 },
+      { text: "It's priced at seven hundred eighty-nine billion twelve million three hundred forty-five thousand six hundred seventy-eight", familiarity: 2 },
+      { text: "We're looking at seven hundred eighty-nine billion twelve million three hundred forty-five thousand six hundred seventy-eight", familiarity: 2 },
+      { text: "Revenue hit seven hundred eighty-nine billion twelve million three hundred forty-five thousand six hundred seventy-eight", familiarity: 3 },
+      { text: "Profits reached seven hundred eighty-nine billion twelve million three hundred forty-five thousand six hundred seventy-eight", familiarity: 3 },
+      { text: "The acquisition cost approximately seven hundred eighty-nine billion twelve million three hundred forty-five thousand six hundred seventy-eight", familiarity: 4 },
+      { text: "The deal is worth seven hundred eighty-nine billion twelve million three hundred forty-five thousand six hundred seventy-eight dollars", familiarity: 4 }
+    ]
+  },
+
+  // 28. $890,123,456,789
+  {
+    number: 890123456789,
+    correct: "$890,123,456,789",
+    choices: ["$890,123,456,789", "$980,123,456,789", "$890,132,456,789", "$980,132,456,789"],
+    detailNumbers: true,
+    variations: [
+      { text: "Eight hundred ninety billion one hundred twenty-three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 1 },
+      { text: "This costs eight hundred ninety billion one hundred twenty-three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 1 },
+      { text: "The price is eight hundred ninety billion one hundred twenty-three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 1 },
+      { text: "It's priced at eight hundred ninety billion one hundred twenty-three million four hundred fifty-six thousand seven hundred eighty-nine", familiarity: 2 },
+      { text: "We're looking at eight hundred ninety billion one hundred twenty-three million four hundred fifty-six thousand seven hundred eighty-nine", familiarity: 2 },
+      { text: "The company is valued at eight hundred ninety billion one hundred twenty-three million four hundred fifty-six thousand seven hundred eighty-nine", familiarity: 3 },
+      { text: "Market cap is eight hundred ninety billion one hundred twenty-three million four hundred fifty-six thousand seven hundred eighty-nine", familiarity: 3 },
+      { text: "They paid approximately eight hundred ninety billion one hundred twenty-three million four hundred fifty-six thousand seven hundred eighty-nine for it", familiarity: 4 },
+      { text: "GDP stands at eight hundred ninety billion one hundred twenty-three million four hundred fifty-six thousand seven hundred eighty-nine dollars", familiarity: 4 }
+    ]
+  },
+
+  // 29. $901,234,567,890
+  {
+    number: 901234567890,
+    correct: "$901,234,567,890",
+    choices: ["$901,234,567,890", "$910,234,567,890", "$901,243,567,890", "$910,243,567,890"],
+    detailNumbers: true,
+    variations: [
+      { text: "Nine hundred one billion two hundred thirty-four million five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 1 },
+      { text: "This costs nine hundred one billion two hundred thirty-four million five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 1 },
+      { text: "The price is nine hundred one billion two hundred thirty-four million five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 1 },
+      { text: "It's priced at nine hundred one billion two hundred thirty-four million five hundred sixty-seven thousand eight hundred ninety", familiarity: 2 },
+      { text: "We're looking at nine hundred one billion two hundred thirty-four million five hundred sixty-seven thousand eight hundred ninety", familiarity: 2 },
+      { text: "Revenue reached nine hundred one billion two hundred thirty-four million five hundred sixty-seven thousand eight hundred ninety", familiarity: 3 },
+      { text: "Profits hit nine hundred one billion two hundred thirty-four million five hundred sixty-seven thousand eight hundred ninety", familiarity: 3 },
+      { text: "The budget is approximately nine hundred one billion two hundred thirty-four million five hundred sixty-seven thousand eight hundred ninety", familiarity: 4 },
+      { text: "Analysts estimate nine hundred one billion two hundred thirty-four million five hundred sixty-seven thousand eight hundred ninety dollars", familiarity: 4 }
+    ]
+  },
+
+  // 30. $987,654,321,098
+  {
+    number: 987654321098,
+    correct: "$987,654,321,098",
+    choices: ["$987,654,321,098", "$978,654,321,098", "$987,645,321,098", "$978,645,321,098"],
+    detailNumbers: true,
+    variations: [
+      { text: "Nine hundred eighty-seven billion six hundred fifty-four million three hundred twenty-one thousand ninety-eight dollars", familiarity: 1 },
+      { text: "This costs nine hundred eighty-seven billion six hundred fifty-four million three hundred twenty-one thousand ninety-eight dollars", familiarity: 1 },
+      { text: "The price is nine hundred eighty-seven billion six hundred fifty-four million three hundred twenty-one thousand ninety-eight dollars", familiarity: 1 },
+      { text: "It's priced at nine hundred eighty-seven billion six hundred fifty-four million three hundred twenty-one thousand ninety-eight", familiarity: 2 },
+      { text: "We're looking at nine hundred eighty-seven billion six hundred fifty-four million three hundred twenty-one thousand ninety-eight", familiarity: 2 },
+      { text: "The company is valued at nine hundred eighty-seven billion six hundred fifty-four million three hundred twenty-one thousand ninety-eight", familiarity: 3 },
+      { text: "Market cap reached nine hundred eighty-seven billion six hundred fifty-four million three hundred twenty-one thousand ninety-eight", familiarity: 3 },
+      { text: "They want approximately nine hundred eighty-seven billion six hundred fifty-four million three hundred twenty-one thousand ninety-eight for it", familiarity: 4 },
+      { text: "The deal is worth nine hundred eighty-seven billion six hundred fifty-four million three hundred twenty-one thousand ninety-eight dollars", familiarity: 4 }
+    ]
+  }
+];
+
+// Export for use in index.html or other modules
+// if (typeof module !== 'undefined' && module.exports) {
+  // module.exports = variations_advanced;
+// }
+
+
+// Integrate variations data into questions object
+const questions = {
+    beginner: beginnerQuestions,
+    intermediate: variations_intermediate.map((q, i) => ({
+        ...q,
+        id: `i${String(i + 1).padStart(3, '0')}`
+    })),
+    advanced: variations_advanced.map((q, i) => ({
+        ...q,
+        id: `a${String(i + 1).padStart(3, '0')}`
+    }))
 };
 
-let currentLevel, currentQuestion, askedQuestionIds = [], currentStreak = 0, bestStreak = 0, totalAnswered = 0;
+// グローバル変数
+let currentLevel, currentQuestion, askedQuestionIds = [], currentStreak = 0, bestStreak = 0;
 let speechRate = 1.0, synth = window.speechSynthesis, voices = [], includeDetailNumbers = false, isAnswered = false;
 const settingsArea = document.getElementById('settingsArea'), difficultySelect = document.getElementById('difficultySelect');
 const questionArea = document.getElementById('questionArea'), questionNumber = document.getElementById('questionNumber');
@@ -307,9 +2145,18 @@ const repeatBtn = document.getElementById('repeatBtn'), backBtn = document.getEl
 const speedSlider = document.getElementById('speedSlider'), speedValue = document.getElementById('speedValue');
 const explanationDiv = document.getElementById('explanation'), explanationText = document.getElementById('explanationText');
 const errorMessage = document.getElementById('errorMessage'), currentStreakDisplay = document.getElementById('currentStreak');
-const bestStreakDisplay = document.getElementById('bestStreak'), totalAnsweredDisplay = document.getElementById('totalAnswered');
+const bestStreakDisplay = document.getElementById('bestStreak');
 const detailNumbersCheckbox = document.getElementById('detailNumbersCheckbox');
 
+// Get max familiarity based on current streak
+function getMaxFamiliarity(currentStreak) {
+    if (currentStreak < 5) return 1;        // 超基本のみ
+    else if (currentStreak < 10) return 2;  // 基本〜よく使う
+    else if (currentStreak < 20) return 3;  // やや珍しいまで
+    else return 4;                          // 全パターン（レア表現含む）
+}
+
+// 初期化関数
 function init() {
     if (!('speechSynthesis' in window)) {
         errorMessage.textContent = 'Your browser does not support Web Speech API. Please use Chrome, Edge, or Safari.';
@@ -344,32 +2191,63 @@ function init() {
     difficultySelect.style.display = 'flex';
 }
 
+// 音声読み込み
 function loadVoices() { voices = synth.getVoices(); }
+
+// 統計読み込み（Cookieから）
 function loadStats() {
-    bestStreak = parseInt(localStorage.getItem('bestStreak') || '0');
+    const savedBestStreak = getCookie('bestStreak');
+    bestStreak = savedBestStreak ? parseInt(savedBestStreak) : 0;
     bestStreakDisplay.textContent = bestStreak;
 }
-function saveStats() { localStorage.setItem('bestStreak', bestStreak); }
-function getNextQuestion(level) {
-    let pool = questions[level];
-    if (!includeDetailNumbers) pool = pool.filter(q => !q.detailNumbers);
+
+// 統計保存（Cookieへ）
+function saveStats() {
+    setCookie('bestStreak', bestStreak, 365);
+}
+
+// 次の問題を取得（重複防止 + familiarity対応）
+function getNextQuestion(difficulty, includeDetailNumbers, currentStreak) {
+    let pool = questions[difficulty];
+
+    // 細かい数字フィルタリング
+    if (!includeDetailNumbers) {
+        pool = pool.filter(q => !q.detailNumbers);
+    }
+
+    // 出題済み問題を除外
     pool = pool.filter(q => !askedQuestionIds.includes(q.id));
+
+    // 全問題出題済みの場合、リセット
     if (pool.length === 0) {
         askedQuestionIds = [];
-        pool = questions[level];
-        if (!includeDetailNumbers) pool = pool.filter(q => !q.detailNumbers);
+        pool = questions[difficulty];
+        if (!includeDetailNumbers) {
+            pool = pool.filter(q => !q.detailNumbers);
+        }
     }
+
+    // ランダムに1問選択
     const question = pool[Math.floor(Math.random() * pool.length)];
     askedQuestionIds.push(question.id);
-    return question;
+
+    // 連続正解数に応じて適切な familiarity レベルの英文を選択
+    const maxFamiliarity = getMaxFamiliarity(currentStreak);
+    const availableVariations = question.variations.filter(v => v.familiarity <= maxFamiliarity);
+    const selectedVariation = availableVariations[Math.floor(Math.random() * availableVariations.length)];
+
+    return {
+        ...question,
+        text: selectedVariation.text  // 選ばれた英文を設定
+    };
 }
+
+// 難易度選択
 function selectDifficulty(level) {
     currentLevel = level;
     askedQuestionIds = [];
     currentStreak = 0;
-    totalAnswered = 0;
     updateStreak();
-    updateTotalAnswered();
     if (level === 'beginner') speechRate = 0.8;
     else if (level === 'intermediate') speechRate = 1.0;
     else speechRate = 1.2;
@@ -380,18 +2258,24 @@ function selectDifficulty(level) {
     questionArea.style.display = 'block';
     loadQuestion();
 }
+
+// 問題読み込み
 function loadQuestion() {
-    currentQuestion = getNextQuestion(currentLevel);
+    currentQuestion = getNextQuestion(currentLevel, includeDetailNumbers, currentStreak);
     isAnswered = false;
-    questionNumber.textContent = `Question #${totalAnswered + 1}`;
     questionText.textContent = 'Get ready...';
     explanationDiv.classList.remove('show');
+
+    // 日本語表記設定の取得
+    const useJapanese = document.getElementById('japaneseDisplay').checked;
+
     const shuffledChoices = [...currentQuestion.choices].sort(() => Math.random() - 0.5);
     choicesDiv.innerHTML = '';
     shuffledChoices.forEach(choice => {
         const btn = document.createElement('button');
         btn.className = 'choice-btn';
-        btn.textContent = choice;
+        btn.dataset.originalValue = choice;  // Store original value
+        btn.textContent = useJapanese ? convertToJapanese(choice) : choice;
         btn.addEventListener('click', () => checkAnswer(choice, btn));
         choicesDiv.appendChild(btn);
     });
@@ -399,6 +2283,8 @@ function loadQuestion() {
     repeatBtn.disabled = true;
     setTimeout(() => { playAudio(); }, 1000);
 }
+
+// 音声再生（常に英語）
 function playAudio() {
     if (!currentQuestion) return;
     const utterance = new SpeechSynthesisUtterance(currentQuestion.text);
@@ -417,6 +2303,8 @@ function playAudio() {
     };
     synth.speak(utterance);
 }
+
+// もう一度聞く
 function repeatAudio() {
     if (!currentQuestion || isAnswered) return;
     const utterance = new SpeechSynthesisUtterance(currentQuestion.text);
@@ -434,11 +2322,24 @@ function repeatAudio() {
     };
     synth.speak(utterance);
 }
+
+// 正解の音声を再生（不正解時用、常に英語）
+function playCorrectAnswerAudio(callback) {
+    const utterance = new SpeechSynthesisUtterance(currentQuestion.correct);
+    utterance.lang = 'en-US';
+    utterance.rate = speechRate;
+    const enVoice = voices.find(v => v.lang.includes('en-US') || v.lang.includes('en'));
+    if (enVoice) utterance.voice = enVoice;
+    utterance.onend = () => {
+        if (callback) callback();
+    };
+    synth.speak(utterance);
+}
+
+// 回答チェック
 function checkAnswer(selected, btn) {
     if (isAnswered) return;
     isAnswered = true;
-    totalAnswered++;
-    updateTotalAnswered();
     document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
     if (selected === currentQuestion.correct) {
         btn.classList.add('correct');
@@ -451,14 +2352,21 @@ function checkAnswer(selected, btn) {
         currentStreak = 0;
         updateStreak();
         document.querySelectorAll('.choice-btn').forEach(b => {
-            if (b.textContent === currentQuestion.correct) b.classList.add('correct');
+            if (b.dataset.originalValue === currentQuestion.correct) b.classList.add('correct');
         });
         explanationText.textContent = currentQuestion.explanation;
         explanationDiv.classList.add('show');
         playIncorrectSound();
-        setTimeout(() => { loadQuestion(); }, 2500);
+        // 不正解時：正解の音声を再生してから次の問題へ
+        setTimeout(() => {
+            playCorrectAnswerAudio(() => {
+                setTimeout(() => { loadQuestion(); }, 500);
+            });
+        }, 500);
     }
 }
+
+// スコア更新
 function updateStreak() {
     currentStreakDisplay.textContent = currentStreak;
     if (currentStreak > bestStreak) {
@@ -467,7 +2375,8 @@ function updateStreak() {
         saveStats();
     }
 }
-function updateTotalAnswered() { totalAnsweredDisplay.textContent = totalAnswered; }
+
+// 難易度選択に戻る
 function backToDifficulty() {
     questionArea.style.display = 'none';
     settingsArea.style.display = 'block';
@@ -475,6 +2384,7 @@ function backToDifficulty() {
     currentLevel = null;
     currentQuestion = null;
 }
+
 window.addEventListener('load', init);
     </script>
 </body>
