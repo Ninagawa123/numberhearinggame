@@ -53,7 +53,7 @@
         .difficulty-btn:hover { background: #667eea; color: white; transform: translateY(-2px); }
         .difficulty-btn.active { background: #667eea; color: white; }
         .question-area { display: none; text-align: center; }
-        .question-number { font-size: 1.3em; margin-bottom: 20px; color: #667eea; font-weight: bold; }
+        .question-number { display: none; }
         .question-text {
             font-size: 1.2em;
             margin-bottom: 20px;
@@ -112,6 +112,7 @@
             padding: 15px;
             margin-top: 20px;
             border-radius: 5px;
+            cursor: pointer;
         }
         .explanation.show { display: block; animation: slideDown 0.3s; }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
@@ -153,8 +154,8 @@
                     <label for="japaneseDisplay">日本語表記回答</label>
                 </div>
                 <div class="speed-control">
-                    <label for="speedSlider">Speech Speed: <span id="speedValue">1.0</span>x</label>
-                    <input type="range" id="speedSlider" class="speed-slider" min="0.5" max="2.0" step="0.1" value="1.0">
+                    <label for="speedSlider">Speech Speed: <span id="speedValue">1.2</span>x</label>
+                    <input type="range" id="speedSlider" class="speed-slider" min="0.5" max="2.0" step="0.1" value="1.2">
                 </div>
             </div>
             <div class="difficulty-select" id="difficultySelect">
@@ -925,6 +926,69 @@ const beginnerQuestions = [
             { text: "They're asking ninety-one thousand six hundred seventy-eight dollars", familiarity: 4 },
             { text: "We're looking at ninety-one thousand six hundred seventy-eight dollars", familiarity: 4 }
         ]
+    },
+
+    // Question 31: $150,000 (long format answer)
+    {
+        id: "b031",
+        number: 150000,
+        correct: "$150,000",
+        choices: ["$150M", "$15,000", "$150,000", "$1,500,000"],
+        explanation: "Practice reading long format with many zeros",
+        detailNumbers: false,
+        variations: [
+            { text: "One hundred fifty thousand dollars", familiarity: 1 },
+            { text: "This costs one hundred fifty thousand dollars", familiarity: 1 },
+            { text: "The price is one hundred fifty thousand dollars", familiarity: 1 },
+            { text: "It's priced at one hundred fifty thousand", familiarity: 2 },
+            { text: "We're looking at one hundred fifty thousand", familiarity: 2 },
+            { text: "That's a hundred and fifty thousand dollars", familiarity: 2 },
+            { text: "The company is valued at one hundred fifty thousand", familiarity: 3 },
+            { text: "Revenue hit one hundred fifty thousand", familiarity: 3 },
+            { text: "They want approximately one hundred fifty thousand for it", familiarity: 4 }
+        ]
+    },
+
+    // Question 32: $250,000 (long format answer)
+    {
+        id: "b032",
+        number: 250000,
+        correct: "$250,000",
+        choices: ["$250M", "$25,000", "$250,000", "$2,500,000"],
+        explanation: "Practice reading long format with many zeros",
+        detailNumbers: false,
+        variations: [
+            { text: "Two hundred fifty thousand dollars", familiarity: 1 },
+            { text: "This costs two hundred fifty thousand dollars", familiarity: 1 },
+            { text: "The price is two hundred fifty thousand dollars", familiarity: 1 },
+            { text: "It's priced at two hundred fifty thousand", familiarity: 2 },
+            { text: "We're looking at two hundred fifty thousand", familiarity: 2 },
+            { text: "That's two hundred and fifty thousand dollars", familiarity: 2 },
+            { text: "The property is valued at two hundred fifty thousand", familiarity: 3 },
+            { text: "Sales reached two hundred fifty thousand", familiarity: 3 },
+            { text: "They're asking approximately two hundred fifty thousand for it", familiarity: 4 }
+        ]
+    },
+
+    // Question 33: $1,500,000 (long format answer)
+    {
+        id: "b033",
+        number: 1500000,
+        correct: "$1,500,000",
+        choices: ["$150M", "$15M", "$150,000", "$1,500,000"],
+        explanation: "Practice reading long format with many zeros",
+        detailNumbers: false,
+        variations: [
+            { text: "One million five hundred thousand dollars", familiarity: 1 },
+            { text: "This costs one million five hundred thousand dollars", familiarity: 1 },
+            { text: "The price is one million five hundred thousand dollars", familiarity: 1 },
+            { text: "It's priced at one million five hundred thousand", familiarity: 2 },
+            { text: "We're looking at one million five hundred thousand", familiarity: 2 },
+            { text: "That's one and a half million dollars", familiarity: 2 },
+            { text: "The house is valued at one million five hundred thousand", familiarity: 3 },
+            { text: "Revenue hit one million five hundred thousand", familiarity: 3 },
+            { text: "They want approximately one million five hundred thousand for it", familiarity: 4 }
+        ]
     }
 ];
 
@@ -1523,6 +1587,86 @@ const variations_intermediate = [
         ],
         choices: ["$45,678,901", "$54,678,901", "$45,687,901", "$54,687,901"],
         explanation: "Large sequential pattern: 4-5-6-7-8-9-0-1"
+    },
+
+    // Question 31: $15,000,000 (long format answer)
+    {
+        number: 15000000,
+        correct: "$15,000,000",
+        detailNumbers: false,
+        variations: [
+            { text: "Fifteen million dollars", familiarity: 1 },
+            { text: "This costs fifteen million dollars", familiarity: 1 },
+            { text: "The price is fifteen million dollars", familiarity: 1 },
+            { text: "It's priced at fifteen million", familiarity: 2 },
+            { text: "We're looking at fifteen million", familiarity: 2 },
+            { text: "The company is valued at fifteen million", familiarity: 3 },
+            { text: "Market cap is fifteen million", familiarity: 3 },
+            { text: "They paid approximately fifteen million for it", familiarity: 4 },
+            { text: "The deal is worth roughly fifteen million dollars", familiarity: 4 }
+        ],
+        choices: ["$1,500,000", "$1.5M", "$150M", "$15,000,000"],
+        explanation: "Practice reading long format with many zeros"
+    },
+
+    // Question 32: $25,000,000 (long format answer)
+    {
+        number: 25000000,
+        correct: "$25,000,000",
+        detailNumbers: false,
+        variations: [
+            { text: "Twenty-five million dollars", familiarity: 1 },
+            { text: "This costs twenty-five million dollars", familiarity: 1 },
+            { text: "The price is twenty-five million dollars", familiarity: 1 },
+            { text: "It's priced at twenty-five million", familiarity: 2 },
+            { text: "We're looking at twenty-five million", familiarity: 2 },
+            { text: "The property is valued at twenty-five million", familiarity: 3 },
+            { text: "Revenue reached twenty-five million", familiarity: 3 },
+            { text: "They paid approximately twenty-five million for it", familiarity: 4 },
+            { text: "Analysts estimate twenty-five million dollars", familiarity: 4 }
+        ],
+        choices: ["$2,500,000", "$2.5M", "$250M", "$25,000,000"],
+        explanation: "Practice reading long format with many zeros"
+    },
+
+    // Question 33: $150,000,000 (long format answer)
+    {
+        number: 150000000,
+        correct: "$150,000,000",
+        detailNumbers: false,
+        variations: [
+            { text: "One hundred fifty million dollars", familiarity: 1 },
+            { text: "This costs one hundred fifty million dollars", familiarity: 1 },
+            { text: "The price is one hundred fifty million dollars", familiarity: 1 },
+            { text: "It's priced at one hundred fifty million", familiarity: 2 },
+            { text: "We're looking at one hundred fifty million", familiarity: 2 },
+            { text: "Revenue reached one hundred fifty million", familiarity: 3 },
+            { text: "Profits hit one hundred fifty million", familiarity: 3 },
+            { text: "The acquisition cost approximately one hundred fifty million", familiarity: 4 },
+            { text: "Analysts estimate one hundred fifty million dollars", familiarity: 4 }
+        ],
+        choices: ["$15,000,000", "$15M", "$1.5B", "$150,000,000"],
+        explanation: "Practice reading long format with many zeros"
+    },
+
+    // Question 34: $250,000,000 (long format answer)
+    {
+        number: 250000000,
+        correct: "$250,000,000",
+        detailNumbers: false,
+        variations: [
+            { text: "Two hundred fifty million dollars", familiarity: 1 },
+            { text: "This costs two hundred fifty million dollars", familiarity: 1 },
+            { text: "The price is two hundred fifty million dollars", familiarity: 1 },
+            { text: "It's priced at two hundred fifty million", familiarity: 2 },
+            { text: "We're looking at two hundred fifty million", familiarity: 2 },
+            { text: "The company is valued at two hundred fifty million", familiarity: 3 },
+            { text: "Market cap reached two hundred fifty million", familiarity: 3 },
+            { text: "They paid approximately two hundred fifty million for it", familiarity: 4 },
+            { text: "The deal is worth roughly two hundred fifty million dollars", familiarity: 4 }
+        ],
+        choices: ["$25,000,000", "$25M", "$2.5B", "$250,000,000"],
+        explanation: "Practice reading long format with many zeros"
     }
 ];
 
@@ -1560,7 +1704,7 @@ const variations_advanced = [
   // 2. $15M (15,000,000)
   {
     number: 15000000,
-    correct: "$15,000,000",
+    correct: "$15M",
     choices: ["$15M", "$1.5M", "$150M", "$15B"],
     detailNumbers: false,
     variations: [
@@ -1598,7 +1742,7 @@ const variations_advanced = [
   // 4. $1.5B (1,500,000,000)
   {
     number: 1500000000,
-    correct: "$1,500,000,000",
+    correct: "$1.5B",
     choices: ["$1.5B", "$15B", "$1,500,000", "$15,000,000,000"],
     detailNumbers: false,
     variations: [
@@ -1695,7 +1839,7 @@ const variations_advanced = [
   // 9. $2.5M (2,500,000)
   {
     number: 2500000,
-    correct: "$2,500,000",
+    correct: "$2.5M",
     choices: ["$2.5M", "$25M", "$250,000", "$2,500,000,000"],
     detailNumbers: false,
     variations: [
@@ -1754,7 +1898,7 @@ const variations_advanced = [
   // 12. $35B (35,000,000,000)
   {
     number: 35000000000,
-    correct: "$35,000,000,000",
+    correct: "$35B",
     choices: ["$35B", "$3.5B", "$350B", "$3.5T"],
     detailNumbers: false,
     variations: [
@@ -1793,7 +1937,7 @@ const variations_advanced = [
   // 14. $500M (500,000,000)
   {
     number: 500000000,
-    correct: "$500,000,000",
+    correct: "$500M",
     choices: ["$500M", "$5B", "$50M", "$500B"],
     detailNumbers: false,
     variations: [
@@ -2113,6 +2257,101 @@ const variations_advanced = [
       { text: "They want approximately nine hundred eighty-seven billion six hundred fifty-four million three hundred twenty-one thousand ninety-eight for it", familiarity: 4 },
       { text: "The deal is worth nine hundred eighty-seven billion six hundred fifty-four million three hundred twenty-one thousand ninety-eight dollars", familiarity: 4 }
     ]
+  },
+
+  // 31. $1,500,000,000 (long format answer)
+  {
+    number: 1500000000,
+    correct: "$1,500,000,000",
+    choices: ["$150,000,000", "$15B", "$150M", "$1,500,000,000"],
+    detailNumbers: false,
+    variations: [
+      { text: "One point five billion dollars", familiarity: 1 },
+      { text: "This costs one point five billion dollars", familiarity: 1 },
+      { text: "The price is one point five billion dollars", familiarity: 1 },
+      { text: "It's priced at one point five billion", familiarity: 2 },
+      { text: "That's one and a half billion dollars", familiarity: 2 },
+      { text: "We're looking at one point five billion", familiarity: 2 },
+      { text: "The company is valued at one point five billion", familiarity: 3 },
+      { text: "Market cap reached one point five billion", familiarity: 3 },
+      { text: "They want approximately one point five billion for it", familiarity: 4 }
+    ]
+  },
+
+  // 32. $15,000,000,000 (long format answer)
+  {
+    number: 15000000000,
+    correct: "$15,000,000,000",
+    choices: ["$1,500,000,000", "$1.5B", "$150B", "$15,000,000,000"],
+    detailNumbers: false,
+    variations: [
+      { text: "Fifteen billion dollars", familiarity: 1 },
+      { text: "This costs fifteen billion dollars", familiarity: 1 },
+      { text: "The price is fifteen billion dollars", familiarity: 1 },
+      { text: "It's priced at fifteen billion", familiarity: 2 },
+      { text: "We're looking at fifteen billion", familiarity: 2 },
+      { text: "The company is valued at fifteen billion", familiarity: 3 },
+      { text: "Revenue hit fifteen billion", familiarity: 3 },
+      { text: "They paid approximately fifteen billion for it", familiarity: 4 },
+      { text: "The deal is worth roughly fifteen billion dollars", familiarity: 4 }
+    ]
+  },
+
+  // 33. $150,000,000,000 (long format answer)
+  {
+    number: 150000000000,
+    correct: "$150,000,000,000",
+    choices: ["$15,000,000,000", "$15B", "$1.5T", "$150,000,000,000"],
+    detailNumbers: false,
+    variations: [
+      { text: "One hundred fifty billion dollars", familiarity: 1 },
+      { text: "This costs one hundred fifty billion dollars", familiarity: 1 },
+      { text: "The price is one hundred fifty billion dollars", familiarity: 1 },
+      { text: "It's priced at one hundred fifty billion", familiarity: 2 },
+      { text: "We're looking at one hundred fifty billion", familiarity: 2 },
+      { text: "Market cap reached one hundred fifty billion", familiarity: 3 },
+      { text: "GDP stands at one hundred fifty billion", familiarity: 3 },
+      { text: "The budget is approximately one hundred fifty billion", familiarity: 4 },
+      { text: "Losses totaled roughly one hundred fifty billion dollars", familiarity: 4 }
+    ]
+  },
+
+  // 34. $1,500,000,000,000 (long format answer)
+  {
+    number: 1500000000000,
+    correct: "$1,500,000,000,000",
+    choices: ["$150,000,000,000", "$15T", "$150B", "$1,500,000,000,000"],
+    detailNumbers: false,
+    variations: [
+      { text: "One point five trillion dollars", familiarity: 1 },
+      { text: "This costs one point five trillion dollars", familiarity: 1 },
+      { text: "The price is one point five trillion dollars", familiarity: 1 },
+      { text: "It's priced at one point five trillion", familiarity: 2 },
+      { text: "That's one and a half trillion dollars", familiarity: 2 },
+      { text: "We're looking at one point five trillion", familiarity: 2 },
+      { text: "GDP stands at one point five trillion", familiarity: 3 },
+      { text: "Revenue hit one point five trillion", familiarity: 3 },
+      { text: "The budget is approximately one point five trillion", familiarity: 4 }
+    ]
+  },
+
+  // 35. $15,000,000,000,000 (long format answer)
+  {
+    number: 15000000000000,
+    correct: "$15,000,000,000,000",
+    choices: ["$1,500,000,000,000", "$1.5T", "$150T", "$15,000,000,000,000"],
+    detailNumbers: false,
+    variations: [
+      { text: "Fifteen trillion dollars", familiarity: 1 },
+      { text: "This costs fifteen trillion dollars", familiarity: 1 },
+      { text: "The price is fifteen trillion dollars", familiarity: 1 },
+      { text: "It's priced at fifteen trillion", familiarity: 2 },
+      { text: "We're looking at fifteen trillion", familiarity: 2 },
+      { text: "GDP increased to fifteen trillion", familiarity: 3 },
+      { text: "Market cap reached fifteen trillion", familiarity: 3 },
+      { text: "The national debt is approximately fifteen trillion", familiarity: 4 },
+      { text: "Infrastructure spending totaled roughly fifteen trillion dollars", familiarity: 4 }
+    ]
   }
 ];
 
@@ -2136,8 +2375,8 @@ const questions = {
 };
 
 // グローバル変数
-let currentLevel, currentQuestion, askedQuestionIds = [], currentStreak = 0, bestStreak = 0;
-let speechRate = 1.0, synth = window.speechSynthesis, voices = [], includeDetailNumbers = false, isAnswered = false;
+let currentLevel, currentQuestion, previousQuestion = null, askedQuestionIds = [], currentStreak = 0, bestStreak = 0;
+let speechRate = 1.2, synth = window.speechSynthesis, voices = [], includeDetailNumbers = false, isAnswered = false;  // デフォルトを1.2倍速に変更
 const settingsArea = document.getElementById('settingsArea'), difficultySelect = document.getElementById('difficultySelect');
 const questionArea = document.getElementById('questionArea'), questionNumber = document.getElementById('questionNumber');
 const questionText = document.getElementById('questionText'), choicesDiv = document.getElementById('choices');
@@ -2157,7 +2396,7 @@ function getMaxFamiliarity(currentStreak) {
 }
 
 // 初期化関数
-function init() {
+async function init() {
     if (!('speechSynthesis' in window)) {
         errorMessage.textContent = 'Your browser does not support Web Speech API. Please use Chrome, Edge, or Safari.';
         errorMessage.style.display = 'block';
@@ -2189,10 +2428,177 @@ function init() {
         }
     });
     difficultySelect.style.display = 'flex';
+
+    // 音声の読み込みを待つ
+    if (typeof speechSynthesis !== 'undefined') {
+        console.log('Waiting for voices to load...');
+        await waitForVoices();
+        console.log('Voices loaded successfully!');
+        listAllVoices();
+    }
 }
 
 // 音声読み込み
 function loadVoices() { voices = synth.getVoices(); }
+
+// 音声が読み込まれるまで待機する
+function waitForVoices() {
+    return new Promise((resolve) => {
+        const voices = speechSynthesis.getVoices();
+        if (voices.length > 0) {
+            // すでに読み込まれている
+            resolve(voices);
+            return;
+        }
+
+        // まだ読み込まれていない場合、イベントを待つ
+        speechSynthesis.onvoiceschanged = () => {
+            const voices = speechSynthesis.getVoices();
+            console.log('Voices loaded:', voices.length);
+            resolve(voices);
+        };
+
+        // タイムアウト処理（10秒待っても読み込まれない場合）
+        setTimeout(() => {
+            const voices = speechSynthesis.getVoices();
+            console.warn('Voice loading timeout. Available voices:', voices.length);
+            resolve(voices);
+        }, 10000);
+    });
+}
+
+// 御屋形様指定の音声リスト（Google音声 + macOS標準音声）
+const RECOMMENDED_VOICES_FEMALE = [
+    'Google US English Female',  // 御屋形様指定
+    'Google UK English Female',  // 御屋形様指定
+    'Samantha'                   // 必ずキープ（御屋形様満足の声）
+];
+
+const RECOMMENDED_VOICES_MALE = [
+    'Google UK English Male',  // 御屋形様指定
+    'Daniel',                   // 御屋形様指定
+    'Alex'                      // 御屋形様指定
+];
+
+// 利用可能な英語音声をすべて取得
+function getEnglishVoices() {
+    const voices = speechSynthesis.getVoices();
+
+    // デバッグ：最初の10音声の lang 値を表示
+    console.log('=== Diagnosing voice.lang format ===');
+    voices.slice(0, 10).forEach(v => {
+        console.log(`  ${v.name}: lang="${v.lang}"`);
+    });
+
+    // より柔軟な英語検出
+    return voices.filter(v => {
+        const lang = v.lang.toLowerCase();
+        // 'en', 'en-US', 'en_US', 'en-GB' など全てマッチ
+        return lang.startsWith('en') || lang.includes('en-') || lang.includes('en_');
+    });
+}
+
+// 推奨音声（女性のみ）
+function getRecommendedVoicesFemale() {
+    const englishVoices = getEnglishVoices();
+    return englishVoices.filter(v =>
+        RECOMMENDED_VOICES_FEMALE.some(name =>
+            v.name.toLowerCase().includes(name.toLowerCase())
+        )
+    );
+}
+
+// 推奨音声（男性のみ）
+function getRecommendedVoicesMale() {
+    const englishVoices = getEnglishVoices();
+    return englishVoices.filter(v =>
+        RECOMMENDED_VOICES_MALE.some(name =>
+            v.name.toLowerCase().includes(name.toLowerCase())
+        )
+    );
+}
+
+// ランダムに英語音声を選択
+function getRandomVoice() {
+    // === デバッグログ開始 ===
+    const allEnglishVoices = getEnglishVoices();
+    const femaleVoices = getRecommendedVoicesFemale();
+    const maleVoices = getRecommendedVoicesMale();
+
+    console.log('=== Voice Selection Debug ===');
+    console.log('All English voices:', allEnglishVoices.length);
+    console.log('Female voices found:', femaleVoices.length);
+    femaleVoices.forEach(v => console.log(`  - ${v.name}`));
+    console.log('Male voices found:', maleVoices.length);
+    maleVoices.forEach(v => console.log(`  - ${v.name}`));
+    console.log('=============================');
+    // === デバッグログ終了 ===
+
+    // 【変更】50%の確率で男性・女性を選択（元の設計に戻す）
+    const useFemale = Math.random() < 0.5;
+    const recommended = useFemale ? femaleVoices : maleVoices;
+    const genderLabel = useFemale ? 'FEMALE' : 'MALE';
+
+    if (recommended.length > 0) {
+        const randomIndex = Math.floor(Math.random() * recommended.length);
+        const selectedVoice = recommended[randomIndex];
+        console.log(`✓ Selected ${genderLabel} voice: ${selectedVoice.name} (${selectedVoice.lang})`);
+        return selectedVoice;
+    }
+
+    // フォールバック1: 選択した性別の音声がない場合、もう一方を試す
+    const fallbackVoices = useFemale ? maleVoices : femaleVoices;
+    const fallbackLabel = useFemale ? 'MALE' : 'FEMALE';
+
+    if (fallbackVoices.length > 0) {
+        console.warn(`⚠️ No recommended ${genderLabel} voices available. Trying ${fallbackLabel} voices.`);
+        const randomIndex = Math.floor(Math.random() * fallbackVoices.length);
+        const selectedVoice = fallbackVoices[randomIndex];
+        console.log(`✓ Selected ${fallbackLabel} voice (fallback): ${selectedVoice.name} (${selectedVoice.lang})`);
+        return selectedVoice;
+    }
+
+    // フォールバック2: 推奨音声がない場合、全英語音声から選択
+    console.warn('⚠️ No recommended voices available. Using fallback.');
+
+    if (allEnglishVoices.length === 0) {
+        console.warn('No English voices available');
+        return null;
+    }
+
+    // デフォルト音声を優先
+    const defaultVoice = allEnglishVoices.find(v => v.default);
+    if (defaultVoice) {
+        console.log(`✓ Using default voice: ${defaultVoice.name} (${defaultVoice.lang})`);
+        return defaultVoice;
+    }
+
+    // デフォルトもない場合は先頭の音声
+    const selectedVoice = allEnglishVoices[0];
+    console.log(`✓ Using first available voice: ${selectedVoice.name} (${selectedVoice.lang})`);
+    return selectedVoice;
+}
+
+// 利用可能な英語音声をリスト表示（デバッグ用）
+function listAllVoices() {
+    const voices = speechSynthesis.getVoices();
+    const englishVoices = voices.filter(v => v.lang.includes('en'));
+
+    console.log('==== Available English Voices ====');
+    console.log(`Total: ${englishVoices.length} voices`);
+
+    if (englishVoices.length === 0) {
+        console.warn('⚠️ No English voices found!');
+        console.log('All voices available:', voices.length);
+        voices.forEach(v => console.log(`  - ${v.name} (${v.lang})`));
+    } else {
+        englishVoices.forEach((voice, index) => {
+            console.log(`[${index + 1}] ${voice.name} (${voice.lang}) - Local: ${voice.localService ? 'Yes' : 'No'}`);
+        });
+    }
+
+    console.log('=== End of Voice List ===');
+}
 
 // 統計読み込み（Cookieから）
 function loadStats() {
@@ -2248,11 +2654,8 @@ function selectDifficulty(level) {
     askedQuestionIds = [];
     currentStreak = 0;
     updateStreak();
-    if (level === 'beginner') speechRate = 0.8;
-    else if (level === 'intermediate') speechRate = 1.0;
-    else speechRate = 1.2;
-    speedSlider.value = speechRate;
-    speedValue.textContent = speechRate.toFixed(1);
+    // speechRate は現在の設定値を保持（ユーザーが設定した値を尊重）
+    // スライダーの値は既に設定されているので更新不要
     settingsArea.style.display = 'none';
     difficultySelect.style.display = 'none';
     questionArea.style.display = 'block';
@@ -2287,11 +2690,23 @@ function loadQuestion() {
 // 音声再生（常に英語）
 function playAudio() {
     if (!currentQuestion) return;
+
+    // 音声が読み込まれているか確認
+    const voices = speechSynthesis.getVoices();
+    if (voices.length === 0) {
+        console.warn('No voices available yet. Waiting...');
+        // 音声を読み込んでから再試行
+        waitForVoices().then(() => {
+            playAudio();
+        });
+        return;
+    }
+
     const utterance = new SpeechSynthesisUtterance(currentQuestion.text);
     utterance.lang = 'en-US';
-    utterance.rate = speechRate;
-    const enVoice = voices.find(v => v.lang.includes('en-US') || v.lang.includes('en'));
-    if (enVoice) utterance.voice = enVoice;
+    utterance.rate = speechRate;  // スライダーの値を使用（デフォルト1.2倍速）
+    const randomVoice = getRandomVoice();
+    if (randomVoice) utterance.voice = randomVoice;
     utterance.onstart = () => {
         repeatBtn.disabled = true;
         questionText.textContent = '🔊 Listening...';
@@ -2306,12 +2721,13 @@ function playAudio() {
 
 // もう一度聞く
 function repeatAudio() {
-    if (!currentQuestion || isAnswered) return;
+    if (!currentQuestion) return;
+
     const utterance = new SpeechSynthesisUtterance(currentQuestion.text);
     utterance.lang = 'en-US';
-    utterance.rate = speechRate;
-    const enVoice = voices.find(v => v.lang.includes('en-US') || v.lang.includes('en'));
-    if (enVoice) utterance.voice = enVoice;
+    utterance.rate = speechRate;  // スライダーの値を使用（デフォルト1.2倍速）
+    const randomVoice = getRandomVoice();
+    if (randomVoice) utterance.voice = randomVoice;
     utterance.onstart = () => {
         repeatBtn.disabled = true;
         questionText.textContent = '🔊 Listening...';
@@ -2327,7 +2743,7 @@ function repeatAudio() {
 function playCorrectAnswerAudio(callback) {
     const utterance = new SpeechSynthesisUtterance(currentQuestion.correct);
     utterance.lang = 'en-US';
-    utterance.rate = speechRate;
+    utterance.rate = speechRate;  // スライダーの値を使用（デフォルト1.2倍速）
     const enVoice = voices.find(v => v.lang.includes('en-US') || v.lang.includes('en'));
     if (enVoice) utterance.voice = enVoice;
     utterance.onend = () => {
@@ -2354,15 +2770,28 @@ function checkAnswer(selected, btn) {
         document.querySelectorAll('.choice-btn').forEach(b => {
             if (b.dataset.originalValue === currentQuestion.correct) b.classList.add('correct');
         });
-        explanationText.textContent = currentQuestion.explanation;
+        explanationText.innerHTML = currentQuestion.explanation;
+        // 全レベルで英文表示
+        explanationText.innerHTML += `<br>英文: "${currentQuestion.text}"`;
+        // ヒントテキスト追加
+        explanationText.innerHTML += '<br><br>(Click to next)';
         explanationDiv.classList.add('show');
         playIncorrectSound();
-        // 不正解時：正解の音声を再生してから次の問題へ
-        setTimeout(() => {
-            playCorrectAnswerAudio(() => {
-                setTimeout(() => { loadQuestion(); }, 500);
-            });
-        }, 500);
+
+        // 不正解時に問題文を自動読み上げ
+        const utterance = new SpeechSynthesisUtterance(currentQuestion.text);
+        utterance.lang = 'en-US';
+        utterance.rate = speechRate;
+        const randomVoice = getRandomVoice();
+        if (randomVoice) utterance.voice = randomVoice;
+        synth.speak(utterance);
+
+        // 説明エリアクリックで次の問題へ進む
+        explanationDiv.onclick = () => {
+            explanationDiv.onclick = null;  // イベントリスナー解除
+            previousQuestion = currentQuestion;  // 前回の問題を保存
+            loadQuestion();
+        };
     }
 }
 
